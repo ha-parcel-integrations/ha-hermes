@@ -11,7 +11,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -21,12 +20,13 @@ from .api import HermesApiClient, HermesApiError
 from .const import (
     CONF_INCLUDE_HISTORY,
     CONF_PARCELS,
+    CONF_REFRESH_INTERVAL,
     CONF_TRACKING_CODE,
     DEFAULT_INCLUDE_HISTORY,
+    DEFAULT_REFRESH_INTERVAL,
     DOMAIN,
     ParcelStatus,
 )
-from .const import CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL
 from .parcels import apply_delivered_filter, normalize_parcel, sort_parcels_by_ts
 
 _LOGGER = logging.getLogger(__name__)
