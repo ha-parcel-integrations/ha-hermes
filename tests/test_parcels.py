@@ -9,13 +9,13 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.hermes import parcels as parcels_module
 from custom_components.hermes.const import (
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     DOMAIN,
     ParcelStatus,
 )
-from custom_components.hermes import parcels as parcels_module
 from custom_components.hermes.parcels import (
     apply_delivered_filter,
     build_history,
