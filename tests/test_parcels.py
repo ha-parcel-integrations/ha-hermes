@@ -15,6 +15,7 @@ from custom_components.hermes.const import (
     DOMAIN,
     ParcelStatus,
 )
+from custom_components.hermes import parcels as parcels_module
 from custom_components.hermes.parcels import (
     apply_delivered_filter,
     build_history,
@@ -72,6 +73,31 @@ def test_unmapped_status_warns_only_once(caplog):
     assert map_parcel_status("ABDUCTED") == ParcelStatus.UNKNOWN
     assert caplog.text.count("ABDUCTED") == 1
     assert "issues/new" in caplog.text
+
+
+def test_payload_shape_warns_once_for_unconfirmed_fields(caplog):
+    """A real payload with fields beyond the confirmed model logs them once,
+    keys only, with an issue link — so a tester can map them."""
+    parcels_module._payload_shape_logged = False
+    raw = {
+        "barcode": "1234567890123",
+        "parcelProgress": [],
+        "eta": "2026-07-30T10:00:00Z",
+        "recipient": {"name": "should-not-be-logged"},
+    }
+    normalize_parcel(raw)
+    normalize_parcel(raw)
+    assert caplog.text.count("have not confirmed against a real") == 1
+    assert "eta" in caplog.text and "recipient" in caplog.text
+    assert "should-not-be-logged" not in caplog.text  # keys only, never values
+    assert "issues/new" in caplog.text
+
+
+def test_payload_shape_silent_for_known_fields(caplog):
+    """The confirmed ``{barcode, parcelProgress}`` shape logs nothing."""
+    parcels_module._payload_shape_logged = False
+    normalize_parcel({"barcode": "1234567890123", "parcelProgress": []})
+    assert "have not confirmed against a real" not in caplog.text
 
 
 # ---------------------------------------------------------------------------

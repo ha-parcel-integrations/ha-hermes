@@ -72,6 +72,31 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
 # only once per HA session instead of on every poll.
 _unmapped_statuses_logged: set[str] = set()
 
+# The confirmed typed model is ``{barcode, parcelProgress}``; a real 200 may
+# carry more (sender / recipient / eta / ParcelShop — see TODO.md). We have
+# never run a real parcel through it, so the first payload with fields beyond
+# the known set logs them once — keys only, never values (they can be personal)
+# — so a tester can confirm what we should wire up. See NEW_ISSUE_URL.
+_KNOWN_PAYLOAD_KEYS = {"barcode", "parcelProgress"}
+_payload_shape_logged = False
+
+
+def _note_payload_shape(raw: dict) -> None:
+    """One-shot: report unconfirmed top-level fields so a tester can map them."""
+    global _payload_shape_logged
+    if _payload_shape_logged:
+        return
+    extra = sorted(set(raw) - _KNOWN_PAYLOAD_KEYS)
+    if not extra:
+        return
+    _payload_shape_logged = True
+    _LOGGER.warning(
+        "Hermes payload carries fields we have not confirmed against a real "
+        "parcel yet: %s. Please help us map them — a diagnostics file is ideal: %s",
+        extra,
+        NEW_ISSUE_URL,
+    )
+
 
 def _warn_unmapped_status(code: str) -> None:
     """Log an unmapped carrier status once, with a copy-paste issue link."""
@@ -239,6 +264,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     Hermes ``raw`` is ``{barcode, parcelProgress:[...]}`` (newest event first).
     The current status is the latest event's ``parcelStatus``.
     """
+    _note_payload_shape(raw)
     tracking_code = raw.get("barcode")
     progress = raw.get("parcelProgress") or []
     latest = progress[0] if progress and isinstance(progress[0], dict) else {}
