@@ -17,10 +17,15 @@ you act in one of these areas:
 | Before you … | Fetch `CONVENTIONS.md` § |
 |---|---|
 | touch entities, sensors, config/options flow, coordinator, diagnostics, translations | *Home Assistant developer docs* (its table points on to the canonical HA page — don't rely on memory) |
-| add/rename a parcel field, a `ParcelStatus`, or a bus event; change the sort/first-refresh; touch unmapped-status logging | *Parcel contract* — exact key set, units, sort, events + suppression; `test_parcels.py::test_normalize_publishes_exactly_the_canonical_keys` guards the key set |
+| add/rename a parcel field, a `ParcelStatus`, or a bus event; change the sort/first-refresh; touch unmapped-status logging | *Parcel contract* — key set, units, sort, events + suppression; `test_parcels.py::test_normalize_publishes_exactly_the_canonical_keys` guards the key set |
 | ship anything while below 1.0.0 (no real parcel run through yet) | *Pre-1.0 releases* — one-shot WARNINGs for every guessed shape/code |
 | consider "fixing" a lint/pattern the skill flags (poll interval, inline client) | *Deliberate skill divergences* |
 | commit, bump, tag, release, or write release notes; add a feature without a test | *Workflow / Commits / Versioning / Testing* |
+
+**API mechanics live in `docs/api/` (local-only, gitignored)** — the keyless
+`api.my-deliveries.de` endpoint, its headers, the 404/400 "no data yet"
+signalling, the `parcelProgress` payload and the `parcelStatus` vocabulary. Do
+not duplicate them here.
 
 **Suite-wide tripwires, kept inline on purpose:**
 - **First refresh in `__init__.py`, before `async_forward_entry_setups`** — from
@@ -32,54 +37,23 @@ you act in one of these areas:
 - **Per-parcel sensors are removed by the summary sensor** via
   `entity_registry.async_remove` (self-removal races and leaves ghosts).
 
-## Carrier-specific notes
+## Carrier-specific decisions (integration only)
 
 This is **Hermes Germany — "Hermes Paket"** (mass-market). Two other Hermes
-surfaces exist and are deliberately **not** used — do not "fix" the integration
-to use them:
-- `myhes.de/api/request/auftragsdaten` — that's Hermes *Einrichtungs-Service*
-  (2-man / furniture), a different niche service. Not Paket.
-- the app account API (`mobile-app-api.a0930.prd.hc.de`) — richer (auto-discovers
-  parcels) but walled behind a static **`Api-Key` embedded in the app** (empty
-  403 without it). That's the refused *shared-extracted-secret* class
-  (bpost/Evri failure mode) — do not ship it.
+surfaces exist and are deliberately **not** used — do not "fix" the integration to
+use them:
+- Hermes *Einrichtungs-Service* (2-man / furniture) — a different niche service,
+  not Paket.
+- the app account API — richer (auto-discovers parcels) but walled behind a static
+  `Api-Key` embedded in the app. That's the refused **shared-extracted-secret**
+  class (the bpost/Evri failure mode) — do not ship it.
 
-### The endpoint
-- **Keyless, code-only** (no key, Bearer or postcode):
-  `GET https://api.my-deliveries.de/tnt/v2/shipments/search/{number}` (14 digits)
-  — the myhermes.de widget's API, cross-checked against `itsvic-dev/deliveries`
-  and `dbalan/hermes`.
-- Headers (`api.py`): `Accept: application/json`, `X-Language: de`, browser-ish
-  `User-Agent`, `Referer: https://www.myhermes.de/` (keyless; UA/Referer just
-  avoid edge heuristics). Optional `X-ZipCode` exists but is **not** required or
-  sent.
-- **"Unknown code": HTTP 404** (not found / not yet scanned) **and HTTP 400**
-  (malformed) are both normal "no data yet" → `async_get_parcel` returns `None`.
-  A **5xx** / other non-2xx raises `HermesApiError`. Probed 2026-07-23: 14 digits
-  → 404, 12 → 400, no bot wall.
-- **Response is a JSON array** of shipments (we track one code → element 0). Empty
-  array is also `None`.
-
-### Payload & status map
-```
-{ "barcode": str,
-  "parcelProgress": [ {"timestamp": iso|null, "status": str,
-                       "parcelStatus": str, "historyText": str|null}, ... ] }
-```
-- `parcelProgress` is **newest event first**; current status is
-  `parcelProgress[0].parcelStatus`.
-- **Map the stable English `parcelStatus`** (`_STATUS_MAP`), never the localised
-  `status` / `historyText` (those become `raw_status`). Timestamps are ISO 8601
-  (`parse_iso` handles `Z` and naive values).
-- **Fields Hermes does not expose** (so the `None`s are intentional): `sender`,
-  `receiver`, `pickup_point`, `weight`, `dimensions`. `planned_from` is read
-  **defensively** from a top-level `eta` / `deliveryForecast` (scalar only) — the
-  confirmed model has no ETA but the widget reads one; `planned_to` always `None`.
-
-**Release blocker (pre-1.0):** endpoint/auth/payload/status confirmed by three
-independent clients, but **no real 14-digit parcel has been run through it** — the
-exact top-level nesting and full `parcelStatus` vocabulary are the last unknowns.
-Treat `tests/payloads.py` as evidence-based, not observed. See `TODO.md`.
+**Release blocker (pre-1.0):** the endpoint/auth/payload/status are confirmed by
+three independent clients, but **no real 14-digit parcel has been run through it**,
+so the exact top-level nesting and full status vocabulary are unknown. Treat the
+modelled test payloads as evidence-based, not observed. **Fields Hermes does not
+expose** (`sender`, `receiver`, `pickup_point`, `weight`, `dimensions`) are `None`
+on purpose; `planned_from` is read defensively (a possible ETA the widget shows).
 
 ## Options and reloads — account-less model
 
