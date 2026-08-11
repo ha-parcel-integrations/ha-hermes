@@ -1,0 +1,144 @@
+{
+  "title": "Hermes",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hermes einrichten",
+        "description": "Für die Hermes-Sendungsverfolgung brauchst du kein Konto und keine Postleitzahl — der Hub wird sofort angelegt. Füge Pakete anschließend über die Integrationsoptionen oder den Dienst `hermes.track_parcel` hinzu."
+      }
+    },
+    "abort": {
+      "already_configured": "Hermes ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hermes-Optionen",
+        "sections": {
+          "parcels": {
+            "name": "Pakete",
+            "data": {
+              "add": "Paket hinzufügen",
+              "remove": "Pakete entfernen"
+            },
+            "data_description": {
+              "add": "Gib einen Hermes-Sendungscode ein, um ihn zu verfolgen. Du findest ihn auf der Versandbestätigung oder der Benachrichtigungskarte bei einem Zustellversuch."
+            }
+          },
+          "delivered": {
+            "name": "Zugestellte Pakete",
+            "data": {
+              "delivered_filter_type": "Filtern nach",
+              "delivered_filter_amount": "Anzahl"
+            },
+            "data_description": {
+              "delivered_filter_type": "Zeige zugestellte Pakete der letzten X Tage oder beschränke die Anzeige auf die letzten X Pakete.",
+              "delivered_filter_amount": "Anzahl der anzuzeigenden Tage oder Pakete."
+            }
+          },
+          "history": {
+            "name": "Paketverlauf",
+            "data": {
+              "include_history": "Statusverlauf einbeziehen"
+            },
+            "data_description": {
+              "include_history": "Fügt jedem Paket ein Verlaufsattribut hinzu, das jede Statusaktualisierung auflistet (Zeitstempel, Status, Originaltext). Standardmäßig deaktiviert."
+            }
+          },
+          "polling": {
+            "name": "Abfrage",
+            "data": {
+              "refresh_interval": "Aktualisieren alle"
+            },
+            "data_description": {
+              "refresh_interval": "Wie oft die Integration bei Hermes nach Paket-Updates fragt. Ein längeres Intervall schont die Hermes-API; die Standardeinstellung von 30 Minuten reicht für die meisten Pakete völlig aus."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "Das sieht nicht wie ein Hermes-Sendungscode aus.",
+      "already_tracked": "Dieses Paket wird bereits verfolgt."
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 Minuten",
+        "30": "30 Minuten",
+        "60": "60 Minuten",
+        "120": "120 Minuten",
+        "240": "240 Minuten"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Tage",
+        "parcels": "Anzahl Pakete"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Paket verfolgen",
+      "description": "Beginnt, ein Paket anhand seines Hermes-Sendungscodes zu verfolgen.",
+      "fields": {
+        "tracking_code": {
+          "name": "Sendungscode",
+          "description": "Der Hermes-Sendungscode."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Paketverfolgung beenden",
+      "description": "Beendet die Verfolgung eines Pakets anhand seines Hermes-Sendungscodes.",
+      "fields": {
+        "tracking_code": {
+          "name": "Sendungscode",
+          "description": "Der Hermes-Sendungscode, dessen Verfolgung beendet werden soll."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Ein Paket wurde registriert",
+      "parcel_status_changed": "Der Status eines Pakets hat sich geändert",
+      "parcel_delivered": "Ein Paket wurde zugestellt",
+      "parcel_delivery_time_changed": "Die voraussichtliche Zustellzeit eines Pakets hat sich geändert"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Aktualisieren"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Zustellungen"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Eingehende Pakete",
+        "unit_of_measurement": "Pakete"
+      },
+      "next_delivery": {
+        "name": "Nächste Zustellung"
+      },
+      "delivered_parcels": {
+        "name": "Zugestellte Pakete",
+        "unit_of_measurement": "Pakete"
+      },
+      "last_update": {
+        "name": "Letzte erfolgreiche Aktualisierung"
+      },
+      "parcel": {
+        "name": "Paket {barcode}"
+      }
+    }
+  }
+}
