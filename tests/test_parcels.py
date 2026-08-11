@@ -11,9 +11,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hermes import parcels as parcels_module
 from custom_components.hermes.const import (
+    CAPABILITIES,
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     DOMAIN,
+    KNOWN_CAPABILITIES,
     ParcelStatus,
 )
 from custom_components.hermes.parcels import (
@@ -228,6 +230,11 @@ def test_normalize_history_is_opt_in():
     parcel = normalize_parcel(delivered_sample(), include_history=True)
     assert len(parcel["history"]) == 4
     assert parcel["history"][0]["status"] == ParcelStatus.REGISTERED
+
+
+def test_capabilities_are_known_values():
+    """A typo here would silently misreport this carrier on the docs site."""
+    assert CAPABILITIES <= KNOWN_CAPABILITIES
 
 
 def test_normalize_active_parcel():

@@ -28,6 +28,20 @@ class ParcelStatus(StrEnum):
 
 PLATFORMS = [Platform.BUTTON, Platform.CALENDAR, Platform.SENSOR]
 
+# Every optional key the parcel contract defines. CAPABILITIES below must be a
+# subset of this — it exists so a typo in CAPABILITIES fails a test instead of
+# silently dropping this carrier off a table on the docs site.
+KNOWN_CAPABILITIES = frozenset(
+    {"weight", "dimensions", "delivery_window", "pickup_point", "url", "history"}
+)
+
+# Which optional contract fields this carrier's API actually populates — feeds
+# the comparison table on the docs site. Keep in lockstep with
+# normalize_parcel() in parcels.py: everything not listed here comes back as a
+# literal None there. Hermes never exposes pickup_point, weight or dimensions;
+# the delivery window is read defensively from an unconfirmed widget field.
+CAPABILITIES = frozenset({"delivery_window", "url", "history"})
+
 # Hermes Germany's consumer **Paket** track-and-trace endpoint. This is the same
 # API the myhermes.de tracking widget (`tnt-bundle-v2.js`) calls, cross-checked
 # against two other clients — `itsvic-dev/deliveries` (Android, MIT) and
