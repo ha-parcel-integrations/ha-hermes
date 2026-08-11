@@ -43,6 +43,7 @@ from .payloads import active_sample, delivered_sample, event, pickup_sample
         ("DELIVERY_TOUR_STARTED", ParcelStatus.OUT_FOR_DELIVERY),
         ("PARCELSHOP_ITEMS_FOR_COLLECTION", ParcelStatus.AT_PICKUP_POINT),
         ("DELIVERED_HOMEDELIVERY", ParcelStatus.DELIVERED),
+        ("DELIVERED_DROPOFF", ParcelStatus.DELIVERED),
         ("RETURN_DELIVERED_TO_SENDER", ParcelStatus.RETURNING),
         ("NOT_DELIVERABLE", ParcelStatus.PROBLEM),
     ],
