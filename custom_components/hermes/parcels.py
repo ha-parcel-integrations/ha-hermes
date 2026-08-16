@@ -53,7 +53,9 @@ NEW_ISSUE_URL = (
 # the stable ``parcelStatus`` code.
 _STATUS_MAP: dict[str, ParcelStatus] = {
     "ANNOUNCED": ParcelStatus.REGISTERED,
+    "PARCELSHOP_DROP_OFF": ParcelStatus.REGISTERED,
     "TAKEN_OVER_BY_HERMES": ParcelStatus.IN_TRANSIT,
+    "PARCELSHOP_COLLECTED_BY_DRIVER": ParcelStatus.IN_TRANSIT,
     "SORTED": ParcelStatus.IN_TRANSIT,
     "ARRIVED_IN_DESTINATION_REGION": ParcelStatus.IN_TRANSIT,
     "DELIVERY_TOUR_STARTED": ParcelStatus.OUT_FOR_DELIVERY,
@@ -69,16 +71,25 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
     "UNKNOWN_WHEREABOUTS": ParcelStatus.PROBLEM,
 }
 
+# ``EDL_BOOKED_DROPOFF`` ("Wunschablageort gebucht") is deliberately left
+# unmapped: it is a delivery-preference booking, not a location movement, and
+# real evidence (ha-hermes#1) shows it firing *before* Hermes even collects
+# the parcel — mapping it to any single ParcelStatus risks regressing the
+# status backwards on a parcel where the same event fires later in transit.
+# It falls through to the unmapped-code warning like any other new code.
+
 # Status codes we have already warned about, so each unmapped one is logged
 # only once per HA session instead of on every poll.
 _unmapped_statuses_logged: set[str] = set()
 
-# The confirmed typed model is ``{barcode, parcelProgress}``; a real 200 may
-# carry more (sender / recipient / eta / ParcelShop — see TODO.md). We have
-# never run a real parcel through it, so the first payload with fields beyond
-# the known set logs them once — keys only, never values (they can be personal)
-# — so a tester can confirm what we should wire up. See NEW_ISSUE_URL.
-_KNOWN_PAYLOAD_KEYS = {"barcode", "parcelProgress"}
+# The confirmed typed model is ``{barcode, parcelProgress, parcelAttributes}``;
+# a real 200 (ha-hermes#1) also carries ``ablt``, ``address``, ``atg``,
+# ``bookedEdl``, ``forecast``, ``latestRelatedBarcode``, ``livetrackingOptions``,
+# ``n1ParcelShopEligible``, ``viewParameters`` — none yet confirmed to carry
+# sender/recipient/eta/parcelShop (open: issue #3). Any field beyond the known
+# set logs once — keys only, never values (they can be personal) — so a
+# tester can confirm what we should wire up next. See NEW_ISSUE_URL.
+_KNOWN_PAYLOAD_KEYS = {"barcode", "parcelProgress", "parcelAttributes"}
 _payload_shape_logged = False
 
 
@@ -253,9 +264,19 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
 
     Invariants:
 
-    * ``status`` is canonical, ``raw_status`` is the carrier's own text.
+    * ``status`` is canonical, ``raw_status`` is the carrier's own text —
+      the latest event's ``historyText`` (localised), not its ``status``
+      field, which is a generic outcome bucket (``HAPPY``/``FINISHED``, seen
+      on every event regardless of what happened) rather than display text.
     * A delivered parcel has ``delivered_at`` set and ``planned_from`` /
       ``planned_to`` cleared — the ETA is meaningless once it has arrived.
+    * ``delivered``/``delivered_at`` also fall back to
+      ``parcelAttributes.delivered``/``deliveredTimestamp`` when the latest
+      ``parcelStatus`` isn't one we map to :attr:`ParcelStatus.DELIVERED` yet —
+      confirmed real (ha-hermes#1: a real parcel's terminal ``DELIVERED_DROPOFF``
+      went unmapped for a release, and ``delivered`` stayed ``False`` the whole
+      time). This keeps ``delivered`` correct even while ``status`` is
+      ``unknown`` for a status we haven't mapped.
     * ``planned_to`` is ``None`` for a point estimate; only fill it when the
       carrier genuinely reports a *window*.
     * ``weight`` is kilograms, ``dimensions`` centimetres (see
@@ -272,7 +293,10 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
 
     status_code = latest.get("parcelStatus")
     status = map_parcel_status(status_code)
-    delivered = status is ParcelStatus.DELIVERED
+
+    attributes = raw.get("parcelAttributes")
+    attributes = attributes if isinstance(attributes, dict) else {}
+    delivered = status is ParcelStatus.DELIVERED or bool(attributes.get("delivered"))
 
     # ETA: the confirmed typed model (barcode + parcelProgress) carries no ETA,
     # but the myhermes.de widget reads an ``eta`` / ``deliveryForecast`` field a
@@ -291,9 +315,15 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         "sender": None,
         "receiver": None,
         "status": status,
-        "raw_status": latest.get("status") or status_code,
+        "raw_status": latest.get("historyText") or status_code,
         "delivered": delivered,
-        "delivered_at": to_iso_timestamp(latest.get("timestamp")) if delivered else None,
+        "delivered_at": (
+            to_iso_timestamp(latest.get("timestamp"))
+            if status is ParcelStatus.DELIVERED
+            else to_iso_timestamp(attributes.get("deliveredTimestamp"))
+            if delivered
+            else None
+        ),
         "planned_from": None if delivered else planned_from,
         "planned_to": None,
         "pickup": status is ParcelStatus.AT_PICKUP_POINT,

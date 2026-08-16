@@ -1,8 +1,10 @@
 """Sample Hermes Paket API payloads shared by the test modules.
 
 Modelled on the confirmed `api.my-deliveries.de/tnt/v2/shipments/search/{id}`
-shape (from `itsvic-dev/deliveries` and the myhermes.de widget): a per-parcel
-object is ``{barcode, parcelProgress:[...]}`` with the newest event first. Kept
+shape (from `itsvic-dev/deliveries`, the myhermes.de widget, and — for
+`dropoff_delivered_sample` — a real redacted response, ha-hermes#1): a
+per-parcel object is ``{barcode, parcelProgress:[...]}`` with the newest event
+first, plus a ``parcelAttributes`` block confirmed on that real parcel. Kept
 in one module so that when a real (redacted) response confirms extra fields,
 there is exactly one place to extend.
 """
@@ -56,3 +58,71 @@ def pickup_sample(code: str = ACTIVE_CODE) -> dict:
         *sample["parcelProgress"],
     ]
     return sample
+
+
+def dropoff_delivered_sample(code: str = DELIVERED_CODE) -> dict:
+    """The real payload from ha-parcel-integrations/ha-hermes#1 (redacted).
+
+    A safe drop-off delivery. Two things a modelled fixture had never
+    exercised before this real parcel surfaced them: the latest event's
+    ``status`` is the generic outcome bucket ``FINISHED`` — distinct from its
+    ``historyText`` — and the top-level payload carries a ``parcelAttributes``
+    block with its own ``delivered``/``deliveredTimestamp``.
+    """
+    return {
+        "barcode": code,
+        "parcelAttributes": {
+            "delivered": True,
+            "deliveredTimestamp": "2026-08-10T08:16:21.025Z",
+        },
+        "parcelProgress": [
+            event(
+                "DELIVERED_DROPOFF",
+                "2026-08-10T08:16:21.025Z",
+                "Die Sendung wurde an einem Ablageort hinterlegt.",
+                status="FINISHED",
+            ),
+            event(
+                "DELIVERY_TOUR_STARTED",
+                "2026-08-10T06:59:25Z",
+                "Die Sendung wurde ins Zustellfahrzeug geladen.",
+                status="HAPPY",
+            ),
+            event(
+                "ARRIVED_IN_DESTINATION_REGION",
+                "2026-08-10T02:20:50Z",
+                "Die Sendung ist in der Zielregion angekommen.",
+                status="HAPPY",
+            ),
+            event(
+                "SORTED",
+                "2026-08-08T15:36:02Z",
+                "Die Sendung wurde für den Weiterversand vorbereitet.",
+                status="HAPPY",
+            ),
+            event(
+                "PARCELSHOP_COLLECTED_BY_DRIVER",
+                "2026-08-08T09:27:41Z",
+                "Die Sendung wurde von Hermes im PaketShop abgeholt.",
+                status="HAPPY",
+            ),
+            event(
+                "EDL_BOOKED_DROPOFF",
+                "2026-08-07T16:00:12Z",
+                "Für die Sendung wurde ein WunschAblageort gebucht.",
+                status="HAPPY",
+            ),
+            event(
+                "PARCELSHOP_DROP_OFF",
+                "2026-08-07T14:29:35Z",
+                "Die Sendung wurde vom Absender im PaketShop abgegeben.",
+                status="HAPPY",
+            ),
+            event(
+                "ANNOUNCED",
+                "2026-08-07T10:57:11Z",
+                "Die Sendung wurde Hermes elektronisch angekündigt.",
+                status="HAPPY",
+            ),
+        ],
+    }

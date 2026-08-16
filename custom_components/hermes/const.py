@@ -55,12 +55,18 @@ CAPABILITIES = frozenset({"delivery_window", "url", "history"})
 # * **Response is a JSON array** of shipments; we track one code, so element 0
 #   is the parcel. `api.py` returns `payload[0]`, or `None` when the array is
 #   empty / the number is unknown (404) or malformed (400) — all normal states.
-# * **Per-parcel shape** (from the typed model in `itsvic-dev/deliveries`):
-#   `{"barcode": str, "parcelProgress": [{"timestamp": iso|null, "status": str,
-#   "parcelStatus": str, "historyText": str|null}, ...]}`, newest event first.
-#   Map the **stable English `parcelStatus`** (not the localised `status` /
-#   `historyText`). A real 200 may also carry sender/recipient/eta/parcelShop
-#   fields the widget reads — still unconfirmed (see TODO.md), read defensively.
+# * **Per-parcel shape**, confirmed on a real 200 (ha-hermes#1, 2026-08):
+#   `{"barcode": str, "parcelAttributes": {"delivered": bool,
+#   "deliveredTimestamp": iso, ...}, "parcelProgress": [{"timestamp": iso|null,
+#   "status": str, "parcelStatus": str, "historyText": str|null}, ...], ...}`,
+#   `parcelProgress` newest event first. Map the **stable English
+#   `parcelStatus`** — `status` is *not* the localised display text, it is a
+#   generic outcome bucket (`HAPPY` / `FINISHED`, unrelated to which event
+#   fired); the actual localised text is `historyText`. `parcelAttributes`
+#   is a resilient secondary signal for `delivered`. Real 200s also carry
+#   `ablt`, `address`, `atg`, `bookedEdl`, `forecast`, `latestRelatedBarcode`,
+#   `livetrackingOptions`, `n1ParcelShopEligible`, `viewParameters` — none
+#   confirmed to carry sender/recipient/eta/parcelShop yet (open: issue #3).
 # * **Rate limits / throttling:** none observed — `--interval configurable` with
 #   a gentle 30 min default, same as the other keyless carriers.
 #
@@ -71,8 +77,8 @@ CAPABILITIES = frozenset({"delivery_window", "url", "history"})
 TRACKING_API_URL = "https://api.my-deliveries.de/tnt/v2/shipments/search/{tracking_code}"
 
 # Human-facing deep link on each parcel's ``url`` field. The consumer tracking
-# page is a client-side SPA, so the exact deep-link shape is UNVERIFIED (see
-# TODO.md); this is the search page with the code appended and may need
+# page is a client-side SPA, so the exact deep-link shape is UNVERIFIED (open:
+# issue #6); this is the search page with the code appended and may need
 # adjusting once we can watch a real lookup.
 TRACKING_URL = "https://www.myhermes.de/empfangen/sendungsverfolgung/#{tracking_code}"
 

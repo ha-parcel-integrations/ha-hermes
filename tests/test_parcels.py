@@ -30,7 +30,13 @@ from custom_components.hermes.parcels import (
     to_iso_timestamp,
 )
 
-from .payloads import active_sample, delivered_sample, event, pickup_sample
+from .payloads import (
+    active_sample,
+    delivered_sample,
+    dropoff_delivered_sample,
+    event,
+    pickup_sample,
+)
 
 # ---------------------------------------------------------------------------
 # map_parcel_status / map_event_status
@@ -46,12 +52,20 @@ from .payloads import active_sample, delivered_sample, event, pickup_sample
         ("PARCELSHOP_ITEMS_FOR_COLLECTION", ParcelStatus.AT_PICKUP_POINT),
         ("DELIVERED_HOMEDELIVERY", ParcelStatus.DELIVERED),
         ("DELIVERED_DROPOFF", ParcelStatus.DELIVERED),
+        ("PARCELSHOP_DROP_OFF", ParcelStatus.REGISTERED),
+        ("PARCELSHOP_COLLECTED_BY_DRIVER", ParcelStatus.IN_TRANSIT),
         ("RETURN_DELIVERED_TO_SENDER", ParcelStatus.RETURNING),
         ("NOT_DELIVERABLE", ParcelStatus.PROBLEM),
     ],
 )
 def test_map_parcel_status_known(code, expected):
     assert map_parcel_status(code) == expected
+
+
+def test_map_event_status_edl_booked_dropoff_stays_unmapped():
+    """A deliberate non-mapping: a delivery-preference booking, not a location
+    movement — see the comment above ``_STATUS_MAP`` in parcels.py."""
+    assert map_event_status("EDL_BOOKED_DROPOFF") is None
 
 
 def test_map_parcel_status_missing_is_unknown():
@@ -279,6 +293,50 @@ def test_normalize_raw_status_falls_back_to_parcel_status_without_text():
         ],
     }
     assert normalize_parcel(raw)["raw_status"] == "SORTED"
+
+
+def test_normalize_raw_status_prefers_history_text_over_outcome_bucket():
+    """ha-hermes#1: the latest event's ``status`` field is a generic outcome
+    bucket (``FINISHED``), not display text — ``historyText`` is."""
+    parcel = normalize_parcel(dropoff_delivered_sample())
+    assert parcel["raw_status"] == "Die Sendung wurde an einem Ablageort hinterlegt."
+    assert parcel["raw_status"] != "FINISHED"
+
+
+def test_normalize_dropoff_delivery_maps_to_delivered():
+    """The real ha-hermes#1 payload: DELIVERED_DROPOFF is mapped, and the
+    pre-collection legs (PARCELSHOP_DROP_OFF, EDL_BOOKED_DROPOFF,
+    PARCELSHOP_COLLECTED_BY_DRIVER) don't crash the mapping."""
+    parcel = normalize_parcel(dropoff_delivered_sample())
+    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["delivered"] is True
+    assert parcel["delivered_at"] == "2026-08-10T08:16:21.025Z"
+
+
+def test_normalize_parcel_attributes_rescue_delivered_for_an_unmapped_status():
+    """Even if a future terminal ``parcelStatus`` isn't mapped yet, ``delivered``
+    stays correct via ``parcelAttributes`` — the fix for ha-hermes#1, where
+    ``delivered`` stayed ``False`` for a release because only the parcelStatus
+    mapping was consulted."""
+    raw = {
+        "barcode": "12345678900003",
+        "parcelAttributes": {
+            "delivered": True,
+            "deliveredTimestamp": "2026-08-10T08:16:21.025Z",
+        },
+        "parcelProgress": [
+            {
+                "timestamp": "2026-08-10T08:16:21.025Z",
+                "status": "FINISHED",
+                "parcelStatus": "SOME_NEW_TERMINAL_STATUS",
+                "historyText": "Some new terminal event.",
+            }
+        ],
+    }
+    parcel = normalize_parcel(raw)
+    assert parcel["status"] == ParcelStatus.UNKNOWN
+    assert parcel["delivered"] is True
+    assert parcel["delivered_at"] == "2026-08-10T08:16:21.025Z"
 
 
 # ---------------------------------------------------------------------------
