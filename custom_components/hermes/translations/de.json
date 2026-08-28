@@ -55,6 +55,25 @@
               "refresh_interval": "Wie oft die Integration bei Hermes nach Paket-Updates fragt. Ein längeres Intervall schont die Hermes-API; die Standardeinstellung von 30 Minuten reicht für die meisten Pakete völlig aus."
             }
           }
+        },
+        "menu_options": {
+          "parcels": "Pakete",
+          "settings": "Einstellungen"
+        }
+      },
+      "parcels": {
+        "title": "Pakete",
+        "data": {
+          "tracking_codes": "Sendungsnummern"
+        }
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "data": {
+          "delivered_filter_type": "Zugestellte Pakete: filtern nach",
+          "delivered_filter_amount": "Zugestellte Pakete: Anzahl",
+          "include_history": "Statusverlauf einbeziehen",
+          "refresh_interval": "Aktualisieren alle"
         }
       }
     },
