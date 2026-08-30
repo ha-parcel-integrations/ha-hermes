@@ -27,6 +27,7 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Options](#options)
+- [Dynamic polling](#dynamic-polling)
 - [Removal](#removal)
 - [Sensors](#sensors)
 - [Parcel status reference](#parcel-status-reference)
@@ -84,7 +85,28 @@ Open **Configure** on the integration entry:
 | Parcels | Add / remove | — | Manage the tracked tracking codes. Changes apply immediately, no restart. |
 | Delivered parcels | Filter by / amount | last 7 days | How long delivered parcels stay visible on the delivered sensor. |
 | Parcel history | Include status history | off | Adds a `history` attribute per parcel with each status update. |
-| Polling | Refresh every | 30 min | How often Hermes is checked. Slower is gentler on their API. |
+
+## Dynamic polling
+
+Instead of polling Hermes at the same rate around the clock, the integration
+adjusts its own cadence to what your tracked parcels are actually doing:
+
+- **Quiet hours** — no polling between 00:00–06:00 local time, aside from one
+  catch-up check at each end of that window (around midnight and around 6
+  AM).
+- **Hot (every 15 minutes)** — as soon as a tracked parcel is
+  `out_for_delivery`, starting an hour before its expected delivery time (or
+  immediately if no time is known).
+- **Mid (every 45 minutes)** — any other in-progress parcel.
+- **Fully stopped** — nothing is tracked, or every tracked parcel has been
+  delivered. Adding a parcel back (via the options dialog, the
+  `hermes.track_parcel` service, or a dashboard button) resumes polling
+  immediately.
+- A small, fixed per-hub offset is added on top, so not every Hermes hub out
+  there polls at exactly the same second.
+
+This is not user-configurable — it is the only polling behaviour this
+integration has.
 
 ## Removal
 
@@ -106,7 +128,7 @@ A **Deliveries** calendar entity is also created, showing expected delivery
 windows for active parcels — read-only, no extra API calls.
 
 A **Refresh** button entity forces an immediate poll, without waiting for the
-next scheduled interval.
+next scheduled poll.
 
 ## Parcel status reference
 
@@ -181,7 +203,7 @@ statuses and events.
 
 ## Disclaimer
 
-This integration uses the same public tracking endpoint as the Hermes consumer website. It is not affiliated with, endorsed by, or supported by Hermes. Be gentle with the polling interval.
+This integration uses the same public tracking endpoint as the Hermes consumer website. It is not affiliated with, endorsed by, or supported by Hermes.
 
 ## Contributing
 

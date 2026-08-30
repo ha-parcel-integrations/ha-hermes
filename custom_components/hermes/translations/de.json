@@ -45,15 +45,6 @@
             "data_description": {
               "include_history": "Fügt jedem Paket ein Verlaufsattribut hinzu, das jede Statusaktualisierung auflistet (Zeitstempel, Status, Originaltext). Standardmäßig deaktiviert."
             }
-          },
-          "polling": {
-            "name": "Abfrage",
-            "data": {
-              "refresh_interval": "Aktualisieren alle"
-            },
-            "data_description": {
-              "refresh_interval": "Wie oft die Integration bei Hermes nach Paket-Updates fragt. Ein längeres Intervall schont die Hermes-API; die Standardeinstellung von 30 Minuten reicht für die meisten Pakete völlig aus."
-            }
           }
         },
         "menu_options": {
@@ -72,8 +63,7 @@
         "data": {
           "delivered_filter_type": "Zugestellte Pakete: filtern nach",
           "delivered_filter_amount": "Zugestellte Pakete: Anzahl",
-          "include_history": "Statusverlauf einbeziehen",
-          "refresh_interval": "Aktualisieren alle"
+          "include_history": "Statusverlauf einbeziehen"
         }
       }
     },
@@ -83,15 +73,6 @@
     }
   },
   "selector": {
-    "refresh_interval": {
-      "options": {
-        "15": "15 Minuten",
-        "30": "30 Minuten",
-        "60": "60 Minuten",
-        "120": "120 Minuten",
-        "240": "240 Minuten"
-      }
-    },
     "delivered_filter_type": {
       "options": {
         "days": "Tage",
