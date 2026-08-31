@@ -54,7 +54,6 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 
 ## Requirements
 
-- Home Assistant 2024.12 or newer
 - A Hermes parcel and its tracking code (from the shipping
   confirmation email or the missed-delivery card) — no account needed
 
