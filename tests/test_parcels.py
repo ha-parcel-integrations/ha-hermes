@@ -47,14 +47,29 @@ from .payloads import (
     "code,expected",
     [
         ("ANNOUNCED", ParcelStatus.REGISTERED),
+        ("ORDER_INFO_RECEIVED", ParcelStatus.REGISTERED),
+        ("PREANNOUNCED", ParcelStatus.REGISTERED),
         ("SORTED", ParcelStatus.IN_TRANSIT),
+        ("SHIPMENT_PICKED_UP", ParcelStatus.IN_TRANSIT),
+        ("HANDED_OVER_TO_HERMES", ParcelStatus.IN_TRANSIT),
+        ("IN_TRANSIT", ParcelStatus.IN_TRANSIT),
+        ("ARRIVED_AT_DEPOT", ParcelStatus.IN_TRANSIT),
+        ("ARRIVED_AT_DELIVERY_DEPOT", ParcelStatus.IN_TRANSIT),
         ("DELIVERY_TOUR_STARTED", ParcelStatus.OUT_FOR_DELIVERY),
+        ("OUT_FOR_DELIVERY", ParcelStatus.OUT_FOR_DELIVERY),
+        ("NEXT_STOP", ParcelStatus.OUT_FOR_DELIVERY),
         ("PARCELSHOP_ITEMS_FOR_COLLECTION", ParcelStatus.AT_PICKUP_POINT),
         ("DELIVERED_HOMEDELIVERY", ParcelStatus.DELIVERED),
+        ("DELIVERED_NEIGHBOUR", ParcelStatus.DELIVERED),
+        ("DELIVERED_PARCELBOX", ParcelStatus.DELIVERED),
         ("DELIVERED_DROPOFF", ParcelStatus.DELIVERED),
+        ("DELIVERED", ParcelStatus.DELIVERED),
+        ("PICKED_UP_BY_RECIPIENT", ParcelStatus.DELIVERED),
+        ("COLLECTED", ParcelStatus.DELIVERED),
         ("PARCELSHOP_DROP_OFF", ParcelStatus.REGISTERED),
         ("PARCELSHOP_COLLECTED_BY_DRIVER", ParcelStatus.IN_TRANSIT),
         ("RETURN_DELIVERED_TO_SENDER", ParcelStatus.RETURNING),
+        ("RETURN_TO_SENDER", ParcelStatus.RETURNING),
         ("NOT_DELIVERABLE", ParcelStatus.PROBLEM),
     ],
 )
@@ -259,6 +274,13 @@ def test_normalize_active_parcel():
     # No ETA window on the confirmed T&T model.
     assert parcel["planned_from"] is None
     assert parcel["planned_to"] is None
+
+
+def test_normalize_uses_sender_company_name_when_present():
+    raw = active_sample()
+    raw["atg"] = {"companyName": "Example Merchant"}
+
+    assert normalize_parcel(raw)["sender"] == "Example Merchant"
 
 
 def test_normalize_pickup_parcel():

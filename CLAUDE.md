@@ -51,9 +51,9 @@ use them:
 **Release blocker (pre-1.0):** the endpoint/auth/payload/status are confirmed by
 three independent clients, but **no real 14-digit parcel has been run through it**,
 so the exact top-level nesting and full status vocabulary are unknown. Treat the
-modelled test payloads as evidence-based, not observed. **Fields Hermes does not
-expose** (`sender`, `receiver`, `pickup_point`, `weight`, `dimensions`) are `None`
-on purpose; `planned_from` is read defensively (a possible ETA the widget shows).
+modelled test payloads as evidence-based, not observed. The sender is populated
+when Hermes provides it; `receiver`, `pickup_point`, `weight`, and `dimensions`
+remain `None`. `planned_from` is read defensively (a possible ETA the widget shows).
 Reflected in `const.py`'s `CAPABILITIES` (feeds the docs site's comparison
 table) — keep the two in agreement if that ever changes.
 

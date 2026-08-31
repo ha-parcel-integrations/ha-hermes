@@ -53,19 +53,34 @@ NEW_ISSUE_URL = (
 # the stable ``parcelStatus`` code.
 _STATUS_MAP: dict[str, ParcelStatus] = {
     "ANNOUNCED": ParcelStatus.REGISTERED,
+    "ORDER_INFO_RECEIVED": ParcelStatus.REGISTERED,
+    "PREANNOUNCED": ParcelStatus.REGISTERED,
     "PARCELSHOP_DROP_OFF": ParcelStatus.REGISTERED,
+    "SHIPMENT_PICKED_UP": ParcelStatus.IN_TRANSIT,
     "TAKEN_OVER_BY_HERMES": ParcelStatus.IN_TRANSIT,
+    "HANDED_OVER_TO_HERMES": ParcelStatus.IN_TRANSIT,
     "PARCELSHOP_COLLECTED_BY_DRIVER": ParcelStatus.IN_TRANSIT,
+    "IN_TRANSIT": ParcelStatus.IN_TRANSIT,
     "SORTED": ParcelStatus.IN_TRANSIT,
+    "ARRIVED_AT_DEPOT": ParcelStatus.IN_TRANSIT,
+    "ARRIVED_AT_DELIVERY_DEPOT": ParcelStatus.IN_TRANSIT,
     "ARRIVED_IN_DESTINATION_REGION": ParcelStatus.IN_TRANSIT,
     "DELIVERY_TOUR_STARTED": ParcelStatus.OUT_FOR_DELIVERY,
+    "OUT_FOR_DELIVERY": ParcelStatus.OUT_FOR_DELIVERY,
+    "NEXT_STOP": ParcelStatus.OUT_FOR_DELIVERY,
     "DELIVERED_HOMEDELIVERY": ParcelStatus.DELIVERED,
+    "DELIVERED_NEIGHBOUR": ParcelStatus.DELIVERED,
     "DELIVERED_PARCELSHOP": ParcelStatus.DELIVERED,
+    "DELIVERED_PARCELBOX": ParcelStatus.DELIVERED,
     "DELIVERED_MAILBOX": ParcelStatus.DELIVERED,
     "DELIVERED_DROPOFF": ParcelStatus.DELIVERED,
+    "DELIVERED": ParcelStatus.DELIVERED,
+    "PICKED_UP_BY_RECIPIENT": ParcelStatus.DELIVERED,
+    "COLLECTED": ParcelStatus.DELIVERED,
     "PARCELSHOP_ITEMS_FOR_COLLECTION": ParcelStatus.AT_PICKUP_POINT,
     "READY_FOR_COLLECTION": ParcelStatus.AT_PICKUP_POINT,
     "RETURN_DELIVERED_TO_SENDER": ParcelStatus.RETURNING,
+    "RETURN_TO_SENDER": ParcelStatus.RETURNING,
     "RETURN": ParcelStatus.RETURNING,
     "NOT_DELIVERABLE": ParcelStatus.PROBLEM,
     "UNKNOWN_WHEREABOUTS": ParcelStatus.PROBLEM,
@@ -89,7 +104,7 @@ _unmapped_statuses_logged: set[str] = set()
 # sender/recipient/eta/parcelShop (open: issue #3). Any field beyond the known
 # set logs once — keys only, never values (they can be personal) — so a
 # tester can confirm what we should wire up next. See NEW_ISSUE_URL.
-_KNOWN_PAYLOAD_KEYS = {"barcode", "parcelProgress", "parcelAttributes"}
+_KNOWN_PAYLOAD_KEYS = {"atg", "barcode", "parcelProgress", "parcelAttributes"}
 _payload_shape_logged = False
 
 
@@ -306,13 +321,14 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     eta = raw.get("eta") or raw.get("deliveryForecast")
     planned_from = to_iso_timestamp(eta) if isinstance(eta, (str, int, float)) else None
 
-    # sender / receiver / pickup-point are likewise not in the confirmed model;
-    # kept ``None`` for parity until a real 200 confirms them. ``weight`` /
-    # ``dimensions`` are never exposed by Hermes.
+    # ``atg.companyName`` is the sender name when Hermes provides it. The other
+    # party and pickup-point fields remain unavailable on this endpoint.
+    atg = raw.get("atg")
+    sender = atg.get("companyName") if isinstance(atg, dict) else None
     return {
         "carrier": "Hermes",
         "barcode": tracking_code,
-        "sender": None,
+        "sender": sender if isinstance(sender, str) and sender else None,
         "receiver": None,
         "status": status,
         "raw_status": latest.get("historyText") or status_code,
