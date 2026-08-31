@@ -53,7 +53,7 @@
         }
       },
       "parcels": {
-        "title": "Pakketten",
+        "title": "Pakketten beheren",
         "data": {
           "tracking_codes": "Trackingcodes"
         }
@@ -61,9 +61,9 @@
       "settings": {
         "title": "Instellingen",
         "data": {
-          "delivered_filter_type": "Bezorgde pakketten: filteren op",
+          "delivered_filter_type": "Filteren op",
           "delivered_filter_amount": "Bezorgde pakketten: aantal",
-          "include_history": "Statusgeschiedenis opnemen"
+          "include_history": "Statusgeschiedenis toevoegen"
         }
       }
     },

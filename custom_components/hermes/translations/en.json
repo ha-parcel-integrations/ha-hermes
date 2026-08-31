@@ -53,7 +53,7 @@
         }
       },
       "parcels": {
-        "title": "Parcels",
+        "title": "Manage parcels",
         "data": {
           "tracking_codes": "Tracking codes"
         }
@@ -61,7 +61,7 @@
       "settings": {
         "title": "Settings",
         "data": {
-          "delivered_filter_type": "Delivered parcels: filter by",
+          "delivered_filter_type": "Filter by",
           "delivered_filter_amount": "Delivered parcels: amount",
           "include_history": "Include status history"
         }
@@ -127,7 +127,7 @@
         "unit_of_measurement": "parcels"
       },
       "awaiting_pickup": {
-        "name": "Awaiting pickup",
+        "name": "Ready for pickup",
         "unit_of_measurement": "parcels"
       },
       "next_delivery": {

@@ -53,7 +53,7 @@
         }
       },
       "parcels": {
-        "title": "Pakete",
+        "title": "Pakete verwalten",
         "data": {
           "tracking_codes": "Sendungsnummern"
         }
