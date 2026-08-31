@@ -126,6 +126,10 @@
         "name": "Eingehende Pakete",
         "unit_of_measurement": "Pakete"
       },
+      "awaiting_pickup": {
+        "name": "Abholbereit",
+        "unit_of_measurement": "Pakete"
+      },
       "next_delivery": {
         "name": "Nächste Zustellung"
       },
