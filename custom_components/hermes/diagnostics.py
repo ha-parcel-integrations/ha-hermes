@@ -8,10 +8,6 @@ from homeassistant.core import HomeAssistant
 
 from . import HermesConfigEntry
 
-# Diagnostics are pasted into public issues, so redact anything that
-# identifies a person, an address or a specific parcel. Over-redacting is
-# cheap; under-redacting leaks a user's home address into a GitHub thread.
-#
 # Diagnostics are pasted into public issues, so redact anything that identifies
 # a person, address or specific parcel. The confirmed Paket payload is mostly
 # non-PII (`barcode`, `parcelProgress` events), but a real 200 may carry
