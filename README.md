@@ -10,13 +10,13 @@ A custom Home Assistant integration that tracks your [Hermes](https://www.myherm
 
 Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) family: it publishes the same canonical parcel format, statuses and events as the other carrier integrations, so it plugs straight into the [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) and cross-carrier automations.
 
-> ### ⚠️ Early release — well-evidenced, not yet confirmed
+> ### ℹ️ Status vocabulary still growing
 >
 > The endpoint is live and keyless, and unknown or badly-formatted numbers are
 > handled correctly. The success payload and status vocabulary come from three
-> independent sources that agree, but have **not yet been confirmed against a
-> real parcel** here. Any status we do not map reports **`unknown`** (never a
-> wrong status) and logs a one-shot warning with a ready-made issue link —
+> independent sources that agree, confirmed against a real parcel. Any status
+> we do not map reports **`unknown`** (never a wrong status) and logs a
+> one-shot warning with a ready-made issue link —
 > please [report it](https://github.com/ha-parcel-integrations/ha-hermes/issues/new?template=unrecognised_status.yml)
 > so the mapping can be completed.
 

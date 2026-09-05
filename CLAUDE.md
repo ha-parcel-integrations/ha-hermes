@@ -18,7 +18,6 @@ you act in one of these areas:
 |---|---|
 | touch entities, sensors, config/options flow, coordinator, diagnostics, translations | *Home Assistant developer docs* (its table points on to the canonical HA page — don't rely on memory) |
 | add/rename a parcel field, a `ParcelStatus`, or a bus event; change the sort/first-refresh; touch unmapped-status logging | *Parcel contract* — key set, units, sort, events + suppression; `test_parcels.py::test_normalize_publishes_exactly_the_canonical_keys` guards the key set |
-| ship anything while below 1.0.0 (no real parcel run through yet) | *Pre-1.0 releases* — one-shot WARNINGs for every guessed shape/code |
 | consider "fixing" a lint/pattern the skill flags (poll interval, inline client) | *Deliberate skill divergences* |
 | commit, bump, tag, release, or write release notes; add a feature without a test | *Workflow / Commits / Versioning / Testing* |
 
@@ -48,12 +47,13 @@ use them:
   `Api-Key` embedded in the app. That's the refused **shared-extracted-secret**
   class (the bpost/Evri failure mode) — do not ship it.
 
-**Release blocker (pre-1.0):** the endpoint/auth/payload/status are confirmed by
-three independent clients, but **no real 14-digit parcel has been run through it**,
-so the exact top-level nesting and full status vocabulary are unknown. Treat the
-modelled test payloads as evidence-based, not observed. The sender is populated
-when Hermes provides it; `receiver`, `pickup_point`, `weight`, and `dimensions`
-remain `None`. `planned_from` is read defensively (a possible ETA the widget shows).
+The endpoint/auth/payload/status are confirmed by three independent clients
+and by a real 14-digit parcel run through it (a live 200), so 1.0.0 is
+shipped. The status vocabulary is still partial: any status we do not map
+reports `unknown` (never a wrong status), so gaps degrade safely rather than
+blocking a release. The sender is populated when Hermes provides it;
+`receiver`, `pickup_point`, `weight`, and `dimensions` remain `None`.
+`planned_from` is read defensively (a possible ETA the widget shows).
 Reflected in `const.py`'s `CAPABILITIES` (feeds the docs site's comparison
 table) — keep the two in agreement if that ever changes.
 
