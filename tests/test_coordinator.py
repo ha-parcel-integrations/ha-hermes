@@ -58,7 +58,7 @@ def _in_transit(code: str = ACTIVE_CODE) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Dynamic polling (dynamic-polling.md Section 2.1, barcode-based) — pure
+# Dynamic polling (barcode-based) — pure
 # helpers
 # ---------------------------------------------------------------------------
 
