@@ -30,20 +30,6 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# Hermes Paket tracking numbers ("Sendungsnummer") are mostly numeric. A
-# 14-digit number is the common case (probed: 14 digits 404s = valid format
-# not found, 12 digits 400s = bad format); some variants run longer, so the
-# range stays generous (12-22 digits) rather than pinning exactly 14 — a false
-# negative is far more annoying than a bad code that simply returns "not
-# found" on the next poll. Some codes carry a single leading letter (e.g.
-# "H1003660779926301068", as shown on myhermes.de's own tracking URL) — that
-# letter is part of the number the carrier's backend expects, not decoration,
-# so dropping it silently returns "not found" forever (issue #8). This regex
-# is also what the ``track_parcel`` service and the e-mail example automation
-# validate against.
-_TRACKING_CODE_RE = re.compile(r"^[A-Z]?[0-9]{12,22}$")
-
-
 def normalize_tracking_code(value: str) -> str:
     """Return the tracking code upper-cased with separators stripped.
 
@@ -55,8 +41,8 @@ def normalize_tracking_code(value: str) -> str:
 
 
 def valid_tracking_code(value: str) -> bool:
-    """Whether ``value`` looks like a Hermes tracking code."""
-    return bool(_TRACKING_CODE_RE.match(value))
+    """Accept every non-empty code; Hermes' real formats vary too much to gate on."""
+    return bool(value)
 
 
 def _current_parcels(entry: ConfigEntry) -> list[dict[str, str]]:

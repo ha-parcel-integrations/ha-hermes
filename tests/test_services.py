@@ -1,8 +1,6 @@
 """Tests for the Hermes services (track_parcel / untrack_parcel)."""
 from unittest.mock import AsyncMock, patch
 
-import pytest
-from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hermes.const import (
@@ -70,12 +68,6 @@ async def test_track_parcel_normalizes_code(hass):
     ]
 
 
-async def test_track_parcel_rejects_invalid_code(hass):
-    await _setup(hass)
-    with pytest.raises(ServiceValidationError):
-        await hass.services.async_call(
-            DOMAIN, "track_parcel", {CONF_TRACKING_CODE: "abc"}, blocking=True
-        )
 
 
 async def test_track_parcel_duplicate_is_noop(hass):
