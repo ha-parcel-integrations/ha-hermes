@@ -24,10 +24,15 @@ async def test_diagnostics_redacts_and_counts(hass):
         }
     ]
     entry.runtime_data.coordinator.delivered = []
+    entry.runtime_data.coordinator.delivered_codes = set()
 
     result = await async_get_config_entry_diagnostics(hass, entry)
 
-    assert result["counts"] == {"incoming_active": 1, "delivered": 0}
+    assert result["counts"] == {
+        "incoming_active": 1,
+        "delivered": 0,
+        "skipped_from_fetch": 0,
+    }
     # tracking codes and payload PII are redacted, at every nesting level
     assert result["entry_options"]["parcels"][0]["tracking_code"] == "**REDACTED**"
     assert result["incoming"][0]["barcode"] == "**REDACTED**"
