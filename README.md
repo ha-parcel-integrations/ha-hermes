@@ -7,7 +7,7 @@
 
 > 💬 Questions or feedback? Join the discussion on the [Home Assistant community](https://community.home-assistant.io/t/packages-postnl-dhl-nl-dpd-and-gls-parcel-integration/112433/).
 
-A custom Home Assistant integration that tracks your [Hermes](https://www.myhermes.de) (Germany, "Hermes Paket") parcels. No account is needed — you enter the 14-digit tracking number yourself, just like on the myhermes.de tracking page.
+A custom Home Assistant integration that tracks your [Hermes](https://www.myhermes.de) (Germany, "Hermes Paket") parcels. No account is needed — you enter the tracking number yourself, just like on the myhermes.de tracking page. Most codes are 14 digits; some carry a single leading letter (e.g. `H1003660779926301068`) — enter it exactly as shown, including that letter.
 
 Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) family: it publishes the same canonical parcel format, statuses and events as the other carrier integrations, so it plugs straight into the [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) and cross-carrier automations.
 

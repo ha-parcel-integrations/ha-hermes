@@ -25,7 +25,14 @@ def test_valid_tracking_code_bounds():
     assert valid_tracking_code("12345678901234")
     assert not valid_tracking_code("123")  # too short
     assert not valid_tracking_code("1" * 23)  # too long
-    assert not valid_tracking_code("12345678901A")  # non-numeric
+    assert not valid_tracking_code("12345678901A")  # trailing letter
+
+
+def test_valid_tracking_code_leading_letter():
+    # e.g. "H1003660779926301068" as shown on myhermes.de (issue #8) — the
+    # letter is part of the number, not a format some codes omit.
+    assert valid_tracking_code("H1003660779926301068")
+    assert not valid_tracking_code("HH12345678901234")  # only one leading letter
 
 
 async def test_user_flow_creates_hub_without_input(hass):
