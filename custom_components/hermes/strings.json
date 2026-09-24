@@ -127,7 +127,7 @@
         "unit_of_measurement": "parcels"
       },
       "awaiting_pickup": {
-        "name": "Ready for pickup",
+        "name": "Awaiting pickup",
         "unit_of_measurement": "parcels"
       },
       "next_delivery": {
