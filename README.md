@@ -32,9 +32,8 @@ Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) 
 > uses. It is not a public API: Hermes can change or withdraw it without
 > notice, and the account source would then stop working until the integration
 > is updated. It has been confirmed against one real account only. The
-> expected delivery window and the pickup point are **always empty** for
-> account parcels until a real parcel proves them. The **tracking code**
-> source is unaffected.
+> expected delivery window is **always empty** for account parcels until a real
+> parcel proves it. The **tracking code** source is unaffected.
 
 ## Contents
 
@@ -96,7 +95,7 @@ Add the integration via **Settings → Devices & Services → Add Integration �
 
 **Hermes account** — enter your account username and password. Only the login tokens are stored, never the password; if Hermes stops accepting them you are asked for the password again. You can add more than one account, and an account can sit next to the tracking hub. An account has no tracked-parcel list — its parcels come from your account — so its **Configure** dialog offers settings only, and the `track_parcel` / `untrack_parcel` services only ever act on the tracking hub.
 
-Parcels from an account carry the receiver's first name when Hermes provides it. Hermes does not report a sender, weight, dimensions, expected delivery window or pickup point for account parcels, so those fields stay empty.
+Parcels from an account carry the sender (the shop or person who sent it), the receiver's first name when Hermes provides it, and — for a parcel routed to a PaketShop — that shop's name and address as the pickup point. Hermes does not report a weight, dimensions or an expected delivery window for account parcels, so those fields stay empty.
 
 ## Options
 

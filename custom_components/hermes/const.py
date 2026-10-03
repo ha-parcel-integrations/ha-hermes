@@ -38,13 +38,14 @@ KNOWN_CAPABILITIES = frozenset(
 # Which optional contract fields each source's API actually populates — feeds
 # the comparison table on the docs site. Keep in lockstep with the matching
 # normaliser (tracking/parcels.py, account/parcels.py): everything not listed
-# here comes back as a literal None there. Neither source exposes pickup_point,
-# weight or dimensions. The keyless route reads its delivery window
-# defensively from an unconfirmed widget field; the account route has never
-# been seen with a populated ETA, so it claims none.
+# here comes back as a literal None there. Neither source exposes weight or
+# dimensions. The keyless route reads its delivery window defensively from an
+# unconfirmed widget field and has no pickup point; the account route names the
+# PaketShop a parcel went to, but has never been seen with a populated ETA, so
+# it claims no delivery window.
 CAPABILITIES_BY_VARIANT = {
     "Tracking": frozenset({"delivery_window", "url", "history"}),
-    "Account": frozenset({"url", "history"}),
+    "Account": frozenset({"pickup_point", "url", "history"}),
 }
 CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 

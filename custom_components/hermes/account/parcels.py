@@ -39,6 +39,29 @@ def _dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _text(value: Any) -> str | None:
+    """Return a non-empty trimmed string, else ``None``."""
+    return value.strip() or None if isinstance(value, str) else None
+
+
+def _pickup_point(address: dict[str, Any]) -> str | None:
+    """Return the PaketShop as "name, street, zip city", else ``None``.
+
+    Hermes reuses one ``address`` block for every destination and distinguishes
+    them by ``addressType``: a home delivery carries only a first name, while a
+    shop carries the whole shop record with its name in ``lastName``. Anything
+    other than ``PARCELSHOP`` therefore has no pickup point, and reading the
+    block unconditionally would publish the receiver's own name as one.
+    """
+    if address.get("addressType") != "PARCELSHOP":
+        return None
+    locality = " ".join(
+        part for part in (_text(address.get("zipCode")), _text(address.get("city"))) if part
+    )
+    parts = [_text(address.get("lastName")), _text(address.get("street")), locality or None]
+    return ", ".join(part for part in parts if part) or None
+
+
 def _build_history(events: Any) -> list[dict]:
     """Return canonical ``{timestamp, status, raw_status}`` entries, oldest first.
 
@@ -98,13 +121,24 @@ def normalize_account_parcel(raw: dict, *, include_history: bool = False) -> dic
         status = ParcelStatus.UNKNOWN
         _warn_unmapped_status(code)
 
-    delivered = _dict(raw.get("metaInformation")).get("delivered") is True
-    first_name = _dict(raw.get("address")).get("firstName")
+    # Hermes' own boolean, never inferred from the status — except that a parcel
+    # waiting on a shop counter is not delivered to you, whatever the flag says.
+    # Without this guard a shop handover could publish `delivered` together with
+    # `at_pickup_point`, which contradicts itself and would retire the parcel
+    # into the delivered list while it still needs collecting. Unconfirmed: no
+    # captured parcel was *currently* at a shop, so the flag's value there is
+    # not known.
+    delivered = (
+        _dict(raw.get("metaInformation")).get("delivered") is True
+        and status is not ParcelStatus.AT_PICKUP_POINT
+    )
+    address = _dict(raw.get("address"))
+    first_name = address.get("firstName")
 
     return {
         "carrier": "Hermes",
         "barcode": barcode,
-        "sender": None,
+        "sender": _text(_dict(raw.get("atg")).get("companyName")),
         "receiver": first_name if isinstance(first_name, str) and first_name else None,
         "status": status,
         "raw_status": _dict(status_block.get("text")).get("longText") or code,
@@ -115,7 +149,7 @@ def normalize_account_parcel(raw: dict, *, include_history: bool = False) -> dic
         "planned_from": None,
         "planned_to": None,
         "pickup": status is ParcelStatus.AT_PICKUP_POINT,
-        "pickup_point": None,
+        "pickup_point": _pickup_point(address),
         "url": tracking_url(barcode),
         "weight": None,
         "dimensions": None,

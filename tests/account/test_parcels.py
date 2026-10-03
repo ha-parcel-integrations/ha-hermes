@@ -152,25 +152,58 @@ def test_history_is_capped_to_the_most_recent_events():
 
 
 def test_unsupplied_fields_are_none_not_invented():
-    """Sender, ETA, pickup point, weight and dimensions are never claimed."""
+    """The ETA, weight and dimensions are never claimed.
+
+    `forecast` and `bookedEdl.deliveryDate` are deliberately not read as an
+    ETA: the date is a *requested* delivery day, and on a real parcel it was
+    two days off the day it actually arrived.
+    """
     shipment = delivered_shipment()
-    shipment["atg"]["companyName"] = "Some Delivery Partner"
-    shipment["address"]["firstName"] = "Test Receiver"
-    shipment["metaInformation"]["destination"] = "Somewhere"
     in_flight = in_flight_shipment()
     in_flight["forecast"] = {"showForecast": True, "deliveryDateBooked": True}
     in_flight["bookedEdl"]["deliveryDate"] = "2026-09-22"
     for source in (shipment, in_flight):
         parcel = normalize_account_parcel(source)
-        for field in (
-            "sender",
-            "planned_from",
-            "planned_to",
-            "pickup_point",
-            "weight",
-            "dimensions",
-        ):
+        for field in ("planned_from", "planned_to", "weight", "dimensions"):
             assert parcel[field] is None, field
+
+
+def test_sender_is_the_atg_company():
+    """`atg` is the Auftraggeber — who sent it, not who carries it.
+
+    Four real parcels carried Flaconi, QVC, Deutsche Telekom and
+    "Privatversand" here, each the shipper.
+    """
+    shipment = delivered_shipment()
+    shipment["atg"]["companyName"] = "Flaconi"
+    assert normalize_account_parcel(shipment)["sender"] == "Flaconi"
+
+
+def test_sender_is_none_when_hermes_names_no_company():
+    shipment = delivered_shipment()
+    shipment["atg"] = {"companyName": "  "}
+    assert normalize_account_parcel(shipment)["sender"] is None
+
+
+def test_pickup_point_is_built_from_a_parcelshop_address():
+    shipment = delivered_shipment()
+    shipment["address"] = {
+        "addressType": "PARCELSHOP",
+        "lastName": "Photo Porst",
+        "street": "Rathausallee 16",
+        "zipCode": "53757",
+        "city": "Sankt Augustin",
+        "country": "DEU",
+    }
+    parcel = normalize_account_parcel(shipment)
+    assert parcel["pickup_point"] == "Photo Porst, Rathausallee 16, 53757 Sankt Augustin"
+
+
+def test_a_home_delivery_has_no_pickup_point():
+    """The receiver's own name must never surface as a pickup point."""
+    shipment = delivered_shipment()
+    shipment["address"] = {"addressType": "HOMEDELIVERY", "firstName": "Test Receiver"}
+    assert normalize_account_parcel(shipment)["pickup_point"] is None
 
 
 def test_receiver_is_the_address_first_name():
@@ -235,6 +268,39 @@ def test_a_prefixed_delivered_status_seen_live_is_mapped():
     would report a future negated form as delivered.
     """
     assert ACCOUNT_STATUS_MAP["INT_ZUGESTELLT_ABLAGEORT"] is ParcelStatus.DELIVERED
+
+
+def test_a_parcel_waiting_at_a_shop_is_not_reported_delivered():
+    """Hermes' delivered flag must not outrank an awaiting-pickup status."""
+    shipment = delivered_shipment()
+    shipment["status"]["parcelStatus"] = "ZUGESTELLT_PAKETSHOP"
+    shipment["metaInformation"]["delivered"] = True
+    parcel = normalize_account_parcel(shipment)
+    assert parcel["status"] is ParcelStatus.AT_PICKUP_POINT
+    assert parcel["delivered"] is False
+    assert parcel["delivered_at"] is None
+    assert parcel["pickup"] is True
+
+
+def test_a_collected_parcel_is_delivered():
+    shipment = delivered_shipment()
+    shipment["status"]["parcelStatus"] = "VOM_PAKETSHOP_ABGEHOLT"
+    shipment["metaInformation"]["delivered"] = True
+    parcel = normalize_account_parcel(shipment)
+    assert parcel["status"] is ParcelStatus.DELIVERED
+    assert parcel["delivered"] is True
+
+
+def test_handed_to_a_shop_is_awaiting_pickup_not_delivered():
+    """`ZUGESTELLT_PAKETSHOP` is "abholbereit" — the shop has it, you do not.
+
+    A real parcel carried this code with the text "Die Sendung ist
+    abholbereit" and only reached VOM_PAKETSHOP_ABGEHOLT two hours later, so
+    mapping it to `delivered` would announce a parcel as home while it sat on
+    a counter.
+    """
+    assert ACCOUNT_STATUS_MAP["ZUGESTELLT_PAKETSHOP"] is ParcelStatus.AT_PICKUP_POINT
+    assert ACCOUNT_STATUS_MAP["VOM_PAKETSHOP_ABGEHOLT"] is ParcelStatus.DELIVERED
 
 
 def test_the_two_status_maps_are_separate_vocabularies():

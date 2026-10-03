@@ -99,7 +99,11 @@ ACCOUNT_STATUS_MAP: dict[str, ParcelStatus] = {
     "LAGERND_MEHRCOLLIG": ParcelStatus.AT_PICKUP_POINT,
     "ZUGESTELLT": ParcelStatus.DELIVERED,
     "ZUGESTELLT_BRIEFKASTEN": ParcelStatus.DELIVERED,
-    "ZUGESTELLT_PAKETSHOP": ParcelStatus.DELIVERED,
+    # "Zugestellt" here means handed to the shop, not to you: a real parcel
+    # carried it with the text "Die Sendung ist abholbereit" and only reached
+    # VOM_PAKETSHOP_ABGEHOLT two hours later. Reporting it as delivered would
+    # tell someone a parcel is home while it waits on a shop counter.
+    "ZUGESTELLT_PAKETSHOP": ParcelStatus.AT_PICKUP_POINT,
     # Seen live 2026-10-03, and absent from every list the app itself carries:
     # the account backend returns values the app does not enumerate, so this map
     # can only ever grow from real parcels. Map each one explicitly — a

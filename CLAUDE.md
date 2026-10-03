@@ -59,14 +59,29 @@ different niche service — do not "fix" the integration to use it.
   gateway before the password is checked: it is a *compatibility* failure
   (`update_required`), never a reauth prompt — branch on the body, not the
   status. The account coordinator raises `ConfigEntryAuthFailed` itself.
-  `sender`, `planned_from`/`planned_to`, `pickup_point`, `weight`, `dimensions`
-  are always `None` (not in the response; `atg.companyName` is the delivery
-  partner). `delivered` is `metaInformation.delivered`, never inferred. A thin
-  `IN_UNKNOWN` element has no `status` block and must normalise to `unknown`.
+  `sender` is `atg.companyName` — **ATG is the Auftraggeber, the shipper**, not
+  the delivering partner (four real parcels named Flaconi, QVC, Deutsche Telekom
+  and "Privatversand"). `pickup_point` is built from `address` **only when
+  `addressType == "PARCELSHOP"`** — that one block describes whatever the
+  destination is, so reading it unconditionally would publish the receiver's own
+  name as a pickup point. `planned_from`/`planned_to`, `weight`, `dimensions`
+  stay `None`: `bookedEdl.deliveryDate` is a *requested* day (two days off on a
+  real parcel), not a forecast. `delivered` is `metaInformation.delivered`, never
+  inferred from the status — but it is **suppressed while the status is
+  `at_pickup_point`**, so a parcel on a shop counter is never announced as
+  delivered. A thin `IN_UNKNOWN` element has no `status` block and must
+  normalise to `unknown`.
 - **Two status maps, never merged** — `TRACKING_STATUS_MAP` (English) and
   `ACCOUNT_STATUS_MAP` (German) in `status.py`, both under the field name
   `parcelStatus`. The `EDL_*`/`HBX_*`/`TAN_*`/`INVALID_*` account families stay
   unmapped on purpose.
+  - **`ZUGESTELLT_PAKETSHOP` is `at_pickup_point`, not `delivered`** — it means
+    "abholbereit"; a real parcel reached `VOM_PAKETSHOP_ABGEHOLT` two hours
+    later. Do not "correct" it back because the word reads as delivered.
+  - **The account vocabulary cannot be enumerated from the app.** A live parcel
+    returned `INT_ZUGESTELLT_ABLAGEORT`, which appears nowhere in the app
+    binary. Map each new code explicitly as it surfaces; never pattern-match on
+    `ZUGESTELLT`, which would swallow a negated form.
 - Root `api.py` / `coordinator.py` / `parcels.py` are re-export shims for old
   import paths — keep them. Assigning module state through `parcels.py` does not
   reach the real module (it copies names); use `tracking.parcels`.
