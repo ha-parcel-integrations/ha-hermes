@@ -7,7 +7,12 @@
 
 > 💬 Questions or feedback? Join the discussion on the [Home Assistant community](https://community.home-assistant.io/t/packages-postnl-dhl-nl-dpd-and-gls-parcel-integration/112433/).
 
-A custom Home Assistant integration that tracks your [Hermes](https://www.myhermes.de) (Germany, "Hermes Paket") parcels. No account is needed — you enter the tracking number yourself, just like on the myhermes.de tracking page. Most codes are 14 digits; some carry a single leading letter (e.g. `H1003660779926301068`) — enter it exactly as shown, including that letter.
+A custom Home Assistant integration that tracks your [Hermes](https://www.myhermes.de) (Germany, "Hermes Paket") parcels, from either of two sources:
+
+- **Tracking codes** — no account needed; you enter the tracking number yourself, just like on the myhermes.de tracking page.
+- **Hermes account** — log in with your Hermes account and your incoming parcels appear on their own, no codes to type.
+
+For tracking codes: Most codes are 14 digits; some carry a single leading letter (e.g. `H1003660779926301068`) — enter it exactly as shown, including that letter.
 
 Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) family: it publishes the same canonical parcel format, statuses and events as the other carrier integrations, so it plugs straight into the [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) and cross-carrier automations.
 
@@ -20,6 +25,16 @@ Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) 
 > one-shot warning with a ready-made issue link —
 > please [report it](https://github.com/ha-parcel-integrations/ha-hermes/issues/new?template=unrecognised_status.yml)
 > so the mapping can be completed.
+
+> ### ⚠️ The account source is unverified and may break
+>
+> The **Hermes account** source talks to the interface Hermes' own mobile app
+> uses. It is not a public API: Hermes can change or withdraw it without
+> notice, and the account source would then stop working until the integration
+> is updated. It has been confirmed against one real account only. The
+> expected delivery window and the pickup point are **always empty** for
+> account parcels until a real parcel proves them. The **tracking code**
+> source is unaffected.
 
 ## Contents
 
@@ -45,6 +60,7 @@ Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) 
 ## Features
 
 - Track any number of Hermes parcels by tracking code — no account needed
+- Or add a Hermes account and have its incoming parcels discovered automatically
 - Per-parcel sensor with the canonical status (`registered` / `in_transit` / `out_for_delivery` / `delivered` / …), the carrier's own status text and a tracking deep-link
 - Summary sensors: incoming parcels, next delivery, recently delivered parcels
 - Read-only **Deliveries** calendar with the expected delivery windows
@@ -55,8 +71,10 @@ Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) 
 
 ## Requirements
 
-- A Hermes parcel and its tracking code (from the shipping
+- **Tracking codes:** a Hermes parcel and its tracking code (from the shipping
   confirmation email or the missed-delivery card) — no account needed
+- **Hermes account:** your Hermes account **username** and password. Note the
+  username — the email address does not work as a login
 
 ## Installation
 
@@ -72,9 +90,13 @@ Copy `custom_components/hermes` into your `config/custom_components/` folder and
 
 ## Configuration
 
-Add the integration via **Settings → Devices & Services → Add Integration → Hermes**. There is nothing to fill in: the hub is created immediately (Hermes tracking needs no account).
+Add the integration via **Settings → Devices & Services → Add Integration → Hermes** and choose a source.
 
-Then add parcels via the integration's **Configure** dialog, the [`hermes.track_parcel`](#services) service, or a [dashboard button](examples/dashboards/add_parcel_card.yaml). The tracking code is on your shipping confirmation email or the missed-delivery card.
+**Tracking codes** — there is nothing to fill in: the hub is created immediately. Then add parcels via the integration's **Configure** dialog, the [`hermes.track_parcel`](#services) service, or a [dashboard button](examples/dashboards/add_parcel_card.yaml). The tracking code is on your shipping confirmation email or the missed-delivery card. Only one tracking hub can exist.
+
+**Hermes account** — enter your account username and password. Only the login tokens are stored, never the password; if Hermes stops accepting them you are asked for the password again. You can add more than one account, and an account can sit next to the tracking hub. An account has no tracked-parcel list — its parcels come from your account — so its **Configure** dialog offers settings only, and the `track_parcel` / `untrack_parcel` services only ever act on the tracking hub.
+
+Parcels from an account carry the receiver's first name when Hermes provides it. Hermes does not report a sender, weight, dimensions, expected delivery window or pickup point for account parcels, so those fields stay empty.
 
 ## Options
 
@@ -82,7 +104,7 @@ Open **Configure** on the integration entry:
 
 | Section | Option | Default | Description |
 |---|---|---|---|
-| Parcels | Add / remove | — | Manage the tracked tracking codes. Changes apply immediately, no restart. |
+| Parcels | Add / remove | — | Manage the tracked tracking codes (tracking hub only). Changes apply immediately, no restart. |
 | Delivered parcels | Filter by / amount | last 7 days | How long delivered parcels stay visible on the delivered sensor. |
 | Parcel history | Include status history | off | Adds a `history` attribute per parcel with each status update. |
 
@@ -105,8 +127,9 @@ adjusts its own cadence to what your tracked parcels are actually doing:
 - A small, fixed per-hub offset is added on top, so not every Hermes hub out
   there polls at exactly the same second.
 
-This is not user-configurable — it is the only polling behaviour this
-integration has.
+This is not user-configurable — it is the only polling behaviour for tracking
+codes. A Hermes account polls its whole inbox in one request every 45 minutes
+and never suspends.
 
 ## Removal
 
@@ -121,6 +144,8 @@ Standard HA removal applies: **Settings → Devices & Services → Hermes → �
 | `sensor.hermes_next_delivery` | Earliest expected delivery moment across all active parcels |
 | `sensor.hermes_delivered_parcels` | Recently delivered parcels (see the retention option) |
 | `sensor.hermes_last_successful_update` | Diagnostic: when Hermes was last polled successfully |
+
+Entities of an account entry are named after the account, e.g. `sensor.hermes_<username>_incoming_parcels`.
 
 A delivered parcel moves from its per-parcel sensor to the delivered sensor automatically.
 
@@ -189,7 +214,9 @@ logger:
 ## Troubleshooting
 
 - **A parcel shows `unknown`** — Hermes has not scanned it yet (their API answers `404` until the first scan), or the number is wrong. It will pick up automatically once scanned.
-- **A status logs "Unrecognised Hermes status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-hermes/issues/new) with the logged line so the mapping can be extended.
+- **Account: "the integration needs an update"** — Hermes refused the integration's access to the account interface. Logging in again will not fix this; wait for a new release.
+- **Account: a parcel shows `unknown` with no details** — Hermes lists some old parcels without any status information.
+- **A status logs "Unrecognised Hermes status" or "Unrecognised Hermes account status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-hermes/issues/new) with the logged line so the mapping can be extended.
 
 ## Related integrations
 

@@ -4,11 +4,36 @@
     "step": {
       "user": {
         "title": "Set up Hermes",
-        "description": "Hermes tracking needs no account or postal code — the hub is created right away. Add parcels afterwards via the integration options or the `hermes.track_parcel` service."
+        "description": "Choose where Hermes parcels come from. Tracking codes need no account — you add the codes yourself. A Hermes account lists your incoming parcels automatically.",
+        "menu_options": {
+          "tracking": "Tracking codes",
+          "account": "Hermes account"
+        }
+      },
+      "account": {
+        "title": "Log in to Hermes",
+        "description": "Log in with your Hermes account **username** (not your email address). Your password is only used to log in and is not stored.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Hermes",
+        "description": "Hermes no longer accepts the saved login for **{username}**. Enter the password again.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "abort": {
-      "already_configured": "Hermes is already set up."
+      "already_configured": "Hermes is already set up.",
+      "reauth_successful": "Reauthentication successful."
+    },
+    "error": {
+      "invalid_auth": "The username or password was not accepted.",
+      "cannot_connect": "Could not reach Hermes. Try again later.",
+      "update_required": "Hermes refused this integration's app access. The integration needs an update — wait for a new release; logging in again will not help."
     }
   },
   "options": {

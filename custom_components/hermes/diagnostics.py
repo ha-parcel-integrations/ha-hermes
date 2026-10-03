@@ -36,6 +36,21 @@ TO_REDACT = {
     "email",
     "name",
     "signature",
+    # account source: credentials, and the receiver / place fields of
+    # GET /shipments (``address`` above already covers the receiver block)
+    "username",
+    "password",
+    "access_token",
+    "refresh_token",
+    "firstName",
+    "companyName",
+    "destination",
+    "externalId",
+    "raw_status",
+    "longText",
+    "shortText",
+    "statusHistoryText",
+    "statusHistoryShortText",
 }
 
 
@@ -46,6 +61,7 @@ async def async_get_config_entry_diagnostics(
     coordinator = entry.runtime_data.coordinator
 
     return {
+        "entry_data": async_redact_data(dict(entry.data), TO_REDACT),
         "entry_options": async_redact_data(dict(entry.options), TO_REDACT),
         "polling": {
             "current_tier_minutes": coordinator.current_tier_minutes,

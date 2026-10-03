@@ -35,12 +35,18 @@ KNOWN_CAPABILITIES = frozenset(
     {"weight", "dimensions", "delivery_window", "pickup_point", "url", "history"}
 )
 
-# Which optional contract fields this carrier's API actually populates — feeds
-# the comparison table on the docs site. Keep in lockstep with
-# normalize_parcel() in parcels.py: everything not listed here comes back as a
-# literal None there. Hermes never exposes pickup_point, weight or dimensions;
-# the delivery window is read defensively from an unconfirmed widget field.
-CAPABILITIES = frozenset({"delivery_window", "url", "history"})
+# Which optional contract fields each source's API actually populates — feeds
+# the comparison table on the docs site. Keep in lockstep with the matching
+# normaliser (tracking/parcels.py, account/parcels.py): everything not listed
+# here comes back as a literal None there. Neither source exposes pickup_point,
+# weight or dimensions. The keyless route reads its delivery window
+# defensively from an unconfirmed widget field; the account route has never
+# been seen with a populated ETA, so it claims none.
+CAPABILITIES_BY_VARIANT = {
+    "Tracking": frozenset({"delivery_window", "url", "history"}),
+    "Account": frozenset({"url", "history"}),
+}
+CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 
 # Hermes Germany's consumer **Paket** track-and-trace endpoint. This is the same
 # API the myhermes.de tracking widget (`tnt-bundle-v2.js`) calls, cross-checked
@@ -50,8 +56,7 @@ CAPABILITIES = frozenset({"delivery_window", "url", "history"})
 # * **Keyless, code-based.** No API key, no Bearer, no auth header — the parcel
 #   number alone (the Dragonfly model). Probed 2026-07-23 with no key and no
 #   cookie: a 14-digit number 404s (not found), a 12-digit one 400s (bad
-#   format). No bot wall on this path (the *account* app API on a sibling host
-#   is Api-Key-walled; this T&T path is not). **No postcode required.**
+#   format). No bot wall on this path. **No postcode required.**
 # * **Response is a JSON array** of shipments; we track one code, so element 0
 #   is the parcel. `api.py` returns `payload[0]`, or `None` when the array is
 #   empty / the number is unknown (404) or malformed (400) — all normal states.
@@ -71,10 +76,10 @@ CAPABILITIES = frozenset({"delivery_window", "url", "history"})
 #   (const.py's HOT_/MID_INTERVAL_MINUTES) applies unconditionally, same as
 #   the other keyless carriers.
 #
-# NB: this is Hermes **Paket** (mass-market). Two other Hermes surfaces exist and
-# are deliberately NOT used: `myhes.de` (the niche Einrichtungs-Service / 2-man
-# furniture arm) and the account app API (Api-Key-walled). Also a separate
-# company from Evri, the former Hermes UK — do not assume a shared endpoint.
+# NB: this is Hermes **Paket** (mass-market). `myhes.de` (the niche
+# Einrichtungs-Service / 2-man furniture arm) is deliberately NOT used. Also a
+# separate company from Evri, the former Hermes UK — do not assume a shared
+# endpoint.
 TRACKING_API_URL = "https://api.my-deliveries.de/tnt/v2/shipments/search/{tracking_code}"
 
 # Human-facing deep link on each parcel's ``url`` field. The consumer tracking
@@ -82,6 +87,27 @@ TRACKING_API_URL = "https://api.my-deliveries.de/tnt/v2/shipments/search/{tracki
 # issue #6); this is the search page with the code appended and may need
 # adjusting once we can watch a real lookup.
 TRACKING_URL = "https://www.myhermes.de/empfangen/sendungsverfolgung/#{tracking_code}"
+
+# Which source an entry reads from. Every read defaults to the tracking source:
+# entries created before the account source existed carry no such key, and that
+# default is the whole migration.
+CONF_SOURCE = "source"
+SOURCE_TRACKING = "tracking"
+SOURCE_ACCOUNT = "account"
+
+# Account source. The login identifier is the account *username*, not an email
+# address. Only the token pair is persisted; the password never is.
+CONF_USERNAME = "username"
+CONF_PASSWORD = "password"
+CONF_ACCESS_TOKEN = "access_token"
+CONF_REFRESH_TOKEN = "refresh_token"
+
+# Transport values for the account route. Never user credentials: do not
+# expose them in the UI, diagnostics, logs or fixtures. A rejected key is a
+# compatibility failure, not a reason to ask every user to log in again.
+ACCOUNT_API_URL = "https://mobile-app-api.a0930.prd.hc.de/api/v12"
+ACCOUNT_APP_VERSION = "12.1.1 (2689)"
+ACCOUNT_API_KEY = "acefe97f-89fc-4f4e-9543-fc6b90f68928"
 
 # Tracked parcels live in the config entry options as a list of
 # ``{tracking_code}`` dicts — this carrier has no account or parcel feed, so the

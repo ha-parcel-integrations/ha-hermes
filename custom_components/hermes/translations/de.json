@@ -4,11 +4,36 @@
     "step": {
       "user": {
         "title": "Hermes einrichten",
-        "description": "Für die Hermes-Sendungsverfolgung brauchst du kein Konto und keine Postleitzahl — der Hub wird sofort angelegt. Füge Pakete anschließend über die Integrationsoptionen oder den Dienst `hermes.track_parcel` hinzu."
+        "description": "Wähle, woher die Hermes-Pakete kommen. Für Sendungsnummern brauchst du kein Konto — du fügst die Nummern selbst hinzu. Ein Hermes-Konto listet deine eingehenden Pakete automatisch auf.",
+        "menu_options": {
+          "tracking": "Sendungsnummern",
+          "account": "Hermes-Konto"
+        }
+      },
+      "account": {
+        "title": "Bei Hermes anmelden",
+        "description": "Melde dich mit dem **Benutzernamen** deines Hermes-Kontos an (nicht mit der E-Mail-Adresse). Dein Passwort wird nur zur Anmeldung verwendet und nicht gespeichert.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Hermes erneut anmelden",
+        "description": "Hermes akzeptiert die gespeicherte Anmeldung für **{username}** nicht mehr. Gib das Passwort erneut ein.",
+        "data": {
+          "password": "Passwort"
+        }
       }
     },
     "abort": {
-      "already_configured": "Hermes ist bereits eingerichtet."
+      "already_configured": "Hermes ist bereits eingerichtet.",
+      "reauth_successful": "Erneute Anmeldung erfolgreich."
+    },
+    "error": {
+      "invalid_auth": "Benutzername oder Passwort wurde nicht akzeptiert.",
+      "cannot_connect": "Hermes ist nicht erreichbar. Versuche es später erneut.",
+      "update_required": "Hermes hat den App-Zugriff dieser Integration abgelehnt. Die Integration braucht ein Update — warte auf eine neue Version; eine erneute Anmeldung hilft nicht."
     }
   },
   "options": {

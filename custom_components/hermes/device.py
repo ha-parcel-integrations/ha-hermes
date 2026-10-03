@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN
+from .const import CONF_SOURCE, CONF_USERNAME, DOMAIN, SOURCE_ACCOUNT
 
 CONFIGURATION_URL = "https://www.myhermes.de"
 
@@ -18,10 +18,16 @@ ATTRIBUTION = "Data provided by Hermes"
 
 
 def build_device_info(entry: ConfigEntry) -> DeviceInfo:
-    """Return the DeviceInfo shared by every entity of this hub."""
+    """Return the DeviceInfo shared by every entity of this hub.
+
+    An account entry carries its username in the device name so a household
+    with more than one account keeps them apart.
+    """
+    username = entry.data.get(CONF_USERNAME)
+    is_account = entry.data.get(CONF_SOURCE) == SOURCE_ACCOUNT
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
-        name="Hermes",
+        name=f"Hermes ({username})" if is_account and username else "Hermes",
         manufacturer="Hermes Germany",
         entry_type=DeviceEntryType.SERVICE,
         configuration_url=CONFIGURATION_URL,

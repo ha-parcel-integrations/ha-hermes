@@ -5,7 +5,7 @@ HACS; not part of HA core. One carrier in the
 [ha-parcel-integrations](https://github.com/ha-parcel-integrations) suite,
 **generated from ha-carrier-template** — everything outside *Carrier-specific
 notes* is suite-wide; when in doubt check the template or a sibling repo.
-Account-less (`track_parcel` / `untrack_parcel` services). No DTO layer.
+Tracking codes or a Hermes account. No DTO layer.
 
 ## Shared conventions — fetch when relevant
 
@@ -43,24 +43,35 @@ This repo follows it exactly.
 
 ## Carrier-specific decisions (integration only)
 
-This is **Hermes Germany — "Hermes Paket"** (mass-market). Two other Hermes
-surfaces exist and are deliberately **not** used — do not "fix" the integration to
-use them:
-- Hermes *Einrichtungs-Service* (2-man / furniture) — a different niche service,
-  not Paket.
-- the app account API — richer (auto-discovers parcels) but walled behind a static
-  `Api-Key` embedded in the app. That's the refused **shared-extracted-secret**
-  class (the bpost/Evri failure mode) — do not ship it.
+This is **Hermes Germany — "Hermes Paket"** (mass-market), with two sources in
+one domain (`entry.data[CONF_SOURCE]`, every read defaulting to tracking so
+1.1.x entries keep working). The *Einrichtungs-Service* (2-man / furniture) is a
+different niche service — do not "fix" the integration to use it.
 
-The endpoint/auth/payload/status are confirmed by three independent clients
-and by a real 14-digit parcel run through it (a live 200), so 1.0.0 is
-shipped. The status vocabulary is still partial: any status we do not map
-reports `unknown` (never a wrong status), so gaps degrade safely rather than
-blocking a release. The sender is populated when Hermes provides it;
-`receiver`, `pickup_point`, `weight`, and `dimensions` remain `None`.
-`planned_from` is read defensively (a possible ETA the widget shows).
-Reflected in `const.py`'s `CAPABILITIES` (feeds the docs site's comparison
-table) — keep the two in agreement if that ever changes.
+- **`tracking/`** — the keyless code-based source. Endpoint/auth/payload/status
+  are confirmed by three independent clients and a real 14-digit parcel.
+  Account-less (`track_parcel` / `untrack_parcel` services, tracking hubs only).
+  The sender is populated when Hermes provides it; `receiver`, `pickup_point`,
+  `weight`, `dimensions` stay `None`; `planned_from` is read defensively.
+- **`account/`** — the logged-in inbox source. Login identifier is the account
+  **username**, not an email; unique id `account:<lowercased username>`. Only
+  the token pair is persisted. A rejected app credential is an HTML 403 from the
+  gateway before the password is checked: it is a *compatibility* failure
+  (`update_required`), never a reauth prompt — branch on the body, not the
+  status. The account coordinator raises `ConfigEntryAuthFailed` itself.
+  `sender`, `planned_from`/`planned_to`, `pickup_point`, `weight`, `dimensions`
+  are always `None` (not in the response; `atg.companyName` is the delivery
+  partner). `delivered` is `metaInformation.delivered`, never inferred. A thin
+  `IN_UNKNOWN` element has no `status` block and must normalise to `unknown`.
+- **Two status maps, never merged** — `TRACKING_STATUS_MAP` (English) and
+  `ACCOUNT_STATUS_MAP` (German) in `status.py`, both under the field name
+  `parcelStatus`. The `EDL_*`/`HBX_*`/`TAN_*`/`INVALID_*` account families stay
+  unmapped on purpose.
+- Root `api.py` / `coordinator.py` / `parcels.py` are re-export shims for old
+  import paths — keep them. Assigning module state through `parcels.py` does not
+  reach the real module (it copies names); use `tracking.parcels`.
+- `CAPABILITIES_BY_VARIANT` carries both sources' optional fields; keep it in
+  agreement with the two normalisers.
 
 ## Running tests
 

@@ -32,6 +32,11 @@ from ..const import (
     STAGGER_MINUTES,
     ParcelStatus,
 )
+from ..events import (
+    fire_incoming_change_events,
+    snapshot_delivery_times,
+    snapshot_states,
+)
 from .api import HermesApiClient, HermesApiError
 from .parcels import apply_delivered_filter, normalize_parcel, sort_parcels_by_ts
 
@@ -298,16 +303,8 @@ class HermesCoordinator(DataUpdateCoordinator[list[dict]]):
         # delivered is visible in one set.
         incoming = normalized_active + self.delivered
         self._fire_change_events(incoming)
-        self._known_state = {
-            parcel["barcode"]: parcel["status"]
-            for parcel in incoming
-            if parcel.get("barcode")
-        }
-        self._known_delivery_times = {
-            parcel["barcode"]: (parcel.get("planned_from"), parcel.get("planned_to"))
-            for parcel in incoming
-            if parcel.get("barcode")
-        }
+        self._known_state = snapshot_states(incoming)
+        self._known_delivery_times = snapshot_delivery_times(incoming)
 
         # Only stamp the diagnostic timestamp when at least one fetch actually
         # succeeded (or nothing needed fetching) — a poll served entirely from
@@ -323,71 +320,11 @@ class HermesCoordinator(DataUpdateCoordinator[list[dict]]):
         return normalized_active
 
     def _fire_change_events(self, parcels: list[dict]) -> None:
-        """Fire registered / status-changed / delivered / delivery-time events.
-
-        Silent on the very first refresh — we cannot know which parcels are
-        genuinely new versus already present before HA started.
-
-        The event contract, identical across the suite:
-
-        * every payload is the full normalised parcel plus ``device_id``;
-        * the hop **to** ``delivered`` fires only ``_parcel_delivered``, never
-          also ``_parcel_status_changed``;
-        * a barcode first seen already-delivered fires nothing;
-        * ``registered`` only fires for a new, not-yet-delivered barcode;
-        * an ETA going ``value → null`` is intentionally silent — the carrier
-          just lost the window, which is not worth waking someone up for.
-        """
-        if self._known_state is None:
-            return
-
-        known_times = self._known_delivery_times or {}
-        device_id = self._device_id()
-
-        for parcel in parcels:
-            barcode = parcel.get("barcode")
-            if not barcode:
-                continue
-            new_status = parcel["status"]
-            if barcode not in self._known_state:
-                if new_status != ParcelStatus.DELIVERED:
-                    self.hass.bus.async_fire(
-                        f"{DOMAIN}_parcel_registered",
-                        {**parcel, "device_id": device_id},
-                    )
-                continue
-
-            if self._known_state[barcode] != new_status:
-                if new_status == ParcelStatus.DELIVERED:
-                    self.hass.bus.async_fire(
-                        f"{DOMAIN}_parcel_delivered",
-                        {**parcel, "device_id": device_id},
-                    )
-                else:
-                    self.hass.bus.async_fire(
-                        f"{DOMAIN}_parcel_status_changed",
-                        {
-                            **parcel,
-                            "device_id": device_id,
-                            "old_status": self._known_state[barcode],
-                            "new_status": new_status,
-                        },
-                    )
-
-            old_from, old_to = known_times.get(barcode, (None, None))
-            new_from = parcel.get("planned_from")
-            new_to = parcel.get("planned_to")
-            from_changed = new_from is not None and new_from != old_from
-            to_changed = new_to is not None and new_to != old_to
-            if from_changed or to_changed:
-                self.hass.bus.async_fire(
-                    f"{DOMAIN}_parcel_delivery_time_changed",
-                    {
-                        **parcel,
-                        "device_id": device_id,
-                        "old_planned_from": old_from,
-                        "new_planned_from": new_from,
-                        "old_planned_to": old_to,
-                        "new_planned_to": new_to,
-                    },
-                )
+        """Fire the shared event set for this cycle's parcels."""
+        fire_incoming_change_events(
+            self.hass,
+            parcels,
+            self._known_state,
+            self._known_delivery_times,
+            self._device_id(),
+        )

@@ -12,7 +12,13 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 
 from .config_flow import normalize_tracking_code, valid_tracking_code
-from .const import CONF_PARCELS, CONF_TRACKING_CODE, DOMAIN
+from .const import (
+    CONF_PARCELS,
+    CONF_SOURCE,
+    CONF_TRACKING_CODE,
+    DOMAIN,
+    SOURCE_TRACKING,
+)
 
 SERVICE_TRACK_PARCEL = "track_parcel"
 SERVICE_UNTRACK_PARCEL = "untrack_parcel"
@@ -22,8 +28,16 @@ _UNTRACK_SCHEMA = vol.Schema({vol.Required(CONF_TRACKING_CODE): cv.string})
 
 
 def _resolve_entry(hass: HomeAssistant):
-    """Return the single Hermes hub, or raise when it is not set up."""
-    entries = hass.config_entries.async_entries(DOMAIN)
+    """Return the tracking hub, or raise when it is not set up.
+
+    An account entry has no tracked-parcel list, so it must never be the one
+    a service writes a code into.
+    """
+    entries = [
+        entry
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if entry.data.get(CONF_SOURCE, SOURCE_TRACKING) == SOURCE_TRACKING
+    ]
     if not entries:
         raise ServiceValidationError("Hermes is not set up")
     return entries[0]
@@ -69,7 +83,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
 
 def async_unload_services(hass: HomeAssistant) -> None:
-    """Remove the Hermes services (single-entry integration, so on unload)."""
+    """Remove the Hermes services."""
     for service in (SERVICE_TRACK_PARCEL, SERVICE_UNTRACK_PARCEL):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

@@ -20,10 +20,12 @@ def reset_one_shot_warnings():
     makes them leak across tests, so whether a warning fires would otherwise
     depend on test order.
     """
+    from custom_components.hermes.account import parcels as account_parcels
     from custom_components.hermes.tracking import parcels
 
     parcels._unmapped_statuses_logged.clear()
     parcels._payload_shape_logged = False
+    account_parcels._unmapped_statuses_logged.clear()
     yield
 
 

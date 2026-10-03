@@ -1,13 +1,20 @@
 """Tests for the Hermes services (track_parcel / untrack_parcel)."""
 from unittest.mock import AsyncMock, patch
 
+import pytest
+from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hermes.const import (
     CONF_PARCELS,
+    CONF_SOURCE,
     CONF_TRACKING_CODE,
+    CONF_USERNAME,
     DOMAIN,
+    SOURCE_ACCOUNT,
+    SOURCE_TRACKING,
 )
+from custom_components.hermes.services import _resolve_entry
 
 from .tracking.payloads import active_sample
 
@@ -124,3 +131,51 @@ async def test_untrack_unknown_code_is_noop(hass):
         await hass.async_block_till_done()
 
     assert len(entry.options[CONF_PARCELS]) == 1
+
+
+async def test_services_only_ever_see_the_tracking_hub(hass):
+    """An account entry has no tracked list; a code must never land in it."""
+    account = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="account:someuser",
+        data={CONF_SOURCE: SOURCE_ACCOUNT, CONF_USERNAME: "someuser"},
+    )
+    account.add_to_hass(hass)
+    tracking = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=DOMAIN,
+        data={CONF_SOURCE: SOURCE_TRACKING},
+        options={CONF_PARCELS: []},
+    )
+    tracking.add_to_hass(hass)
+    with patch(
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
+        new=AsyncMock(return_value=_SAMPLE),
+    ), patch(
+        "custom_components.hermes.account.client.HermesAccountClient.async_get_shipments",
+        new=AsyncMock(return_value=[]),
+    ):
+        assert await hass.config_entries.async_setup(tracking.entry_id)
+        await hass.async_block_till_done()
+        await hass.services.async_call(
+            DOMAIN,
+            "track_parcel",
+            {CONF_TRACKING_CODE: "12345678909999"},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
+    assert tracking.options[CONF_PARCELS] == [{CONF_TRACKING_CODE: "12345678909999"}]
+    assert CONF_PARCELS not in account.options
+
+
+async def test_service_without_a_tracking_hub_is_rejected(hass):
+    """With only an account entry, a service call has no hub to write to."""
+    account = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="account:someuser",
+        data={CONF_SOURCE: SOURCE_ACCOUNT, CONF_USERNAME: "someuser"},
+    )
+    account.add_to_hass(hass)
+    with pytest.raises(ServiceValidationError):
+        _resolve_entry(hass)

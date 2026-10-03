@@ -30,68 +30,14 @@ from ..const import (
     TRACKING_URL,
     ParcelStatus,
 )
+from ..status import NEW_ISSUE_URL, TRACKING_STATUS_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
-# Where users report a status we do not map yet. Rewritten by the bootstrap
-# script; it must point at the carrier's own repo so the log line is
-# copy-pasteable straight into a new issue.
-#
-# The ``?template=`` parameter matters: without it the link opens a blank form,
-# and the report comes back missing the version and the log line we need.
-NEW_ISSUE_URL = (
-    "https://github.com/ha-parcel-integrations/ha-hermes/issues/new"
-    "?template=unrecognised_status.yml"
-)
-
-# Hermes ``parcelStatus`` (the stable English enum on each ``parcelProgress``
-# event) → canonical ParcelStatus. Seeded from the values mapped in
-# ``itsvic-dev/deliveries`` (HermesDeliveryService.kt) plus the pickup family
-# from the app decompile; extend it as real parcels surface more. An unmapped
-# value surfaces as ``unknown`` plus a one-shot warning that asks the user to
-# report it — do not map the localised ``status`` / ``historyText`` here, only
-# the stable ``parcelStatus`` code.
-_STATUS_MAP: dict[str, ParcelStatus] = {
-    "ANNOUNCED": ParcelStatus.REGISTERED,
-    "ORDER_INFO_RECEIVED": ParcelStatus.REGISTERED,
-    "PREANNOUNCED": ParcelStatus.REGISTERED,
-    "PARCELSHOP_DROP_OFF": ParcelStatus.REGISTERED,
-    "SHIPMENT_PICKED_UP": ParcelStatus.IN_TRANSIT,
-    "TAKEN_OVER_BY_HERMES": ParcelStatus.IN_TRANSIT,
-    "HANDED_OVER_TO_HERMES": ParcelStatus.IN_TRANSIT,
-    "PARCELSHOP_COLLECTED_BY_DRIVER": ParcelStatus.IN_TRANSIT,
-    "IN_TRANSIT": ParcelStatus.IN_TRANSIT,
-    "SORTED": ParcelStatus.IN_TRANSIT,
-    "ARRIVED_AT_DEPOT": ParcelStatus.IN_TRANSIT,
-    "ARRIVED_AT_DELIVERY_DEPOT": ParcelStatus.IN_TRANSIT,
-    "ARRIVED_IN_DESTINATION_REGION": ParcelStatus.IN_TRANSIT,
-    "DELIVERY_TOUR_STARTED": ParcelStatus.OUT_FOR_DELIVERY,
-    "OUT_FOR_DELIVERY": ParcelStatus.OUT_FOR_DELIVERY,
-    "NEXT_STOP": ParcelStatus.OUT_FOR_DELIVERY,
-    "DELIVERED_HOMEDELIVERY": ParcelStatus.DELIVERED,
-    "DELIVERED_NEIGHBOUR": ParcelStatus.DELIVERED,
-    "DELIVERED_PARCELSHOP": ParcelStatus.DELIVERED,
-    "DELIVERED_PARCELBOX": ParcelStatus.DELIVERED,
-    "DELIVERED_MAILBOX": ParcelStatus.DELIVERED,
-    "DELIVERED_DROPOFF": ParcelStatus.DELIVERED,
-    "DELIVERED": ParcelStatus.DELIVERED,
-    "PICKED_UP_BY_RECIPIENT": ParcelStatus.DELIVERED,
-    "COLLECTED": ParcelStatus.DELIVERED,
-    "PARCELSHOP_ITEMS_FOR_COLLECTION": ParcelStatus.AT_PICKUP_POINT,
-    "READY_FOR_COLLECTION": ParcelStatus.AT_PICKUP_POINT,
-    "RETURN_DELIVERED_TO_SENDER": ParcelStatus.RETURNING,
-    "RETURN_TO_SENDER": ParcelStatus.RETURNING,
-    "RETURN": ParcelStatus.RETURNING,
-    "NOT_DELIVERABLE": ParcelStatus.PROBLEM,
-    "UNKNOWN_WHEREABOUTS": ParcelStatus.PROBLEM,
-}
-
-# ``EDL_BOOKED_DROPOFF`` ("Wunschablageort gebucht") is deliberately left
-# unmapped: it is a delivery-preference booking, not a location movement, and
-# real evidence (ha-hermes#1) shows it firing *before* Hermes even collects
-# the parcel — mapping it to any single ParcelStatus risks regressing the
-# status backwards on a parcel where the same event fires later in transit.
-# It falls through to the unmapped-code warning like any other new code.
+# Hermes' keyless ``parcelStatus`` vocabulary lives in ``status.py`` beside the
+# account source's, which is a different (German) vocabulary under the same
+# field name — the two must never share a map.
+_STATUS_MAP = TRACKING_STATUS_MAP
 
 # Status codes we have already warned about, so each unmapped one is logged
 # only once per HA session instead of on every poll.

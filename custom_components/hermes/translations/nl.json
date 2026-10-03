@@ -4,11 +4,36 @@
     "step": {
       "user": {
         "title": "Hermes instellen",
-        "description": "Hermes-tracking heeft geen account of postcode nodig — de hub wordt direct aangemaakt. Pakketten voeg je daarna toe via de integratie-opties of de service `hermes.track_parcel`."
+        "description": "Kies waar de Hermes-pakketten vandaan komen. Voor trackingcodes heb je geen account nodig — je voegt de codes zelf toe. Een Hermes-account toont je inkomende pakketten automatisch.",
+        "menu_options": {
+          "tracking": "Trackingcodes",
+          "account": "Hermes-account"
+        }
+      },
+      "account": {
+        "title": "Inloggen bij Hermes",
+        "description": "Log in met de **gebruikersnaam** van je Hermes-account (niet je e-mailadres). Je wachtwoord wordt alleen gebruikt om in te loggen en niet opgeslagen.",
+        "data": {
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Hermes opnieuw inloggen",
+        "description": "Hermes accepteert de opgeslagen login voor **{username}** niet meer. Voer het wachtwoord opnieuw in.",
+        "data": {
+          "password": "Wachtwoord"
+        }
       }
     },
     "abort": {
-      "already_configured": "Hermes is al ingesteld."
+      "already_configured": "Hermes is al ingesteld.",
+      "reauth_successful": "Opnieuw inloggen gelukt."
+    },
+    "error": {
+      "invalid_auth": "De gebruikersnaam of het wachtwoord is niet geaccepteerd.",
+      "cannot_connect": "Hermes is niet bereikbaar. Probeer het later opnieuw.",
+      "update_required": "Hermes heeft de app-toegang van deze integratie geweigerd. De integratie heeft een update nodig — wacht op een nieuwe versie; opnieuw inloggen helpt niet."
     }
   },
   "options": {
