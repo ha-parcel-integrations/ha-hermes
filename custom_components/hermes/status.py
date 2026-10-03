@@ -100,6 +100,12 @@ ACCOUNT_STATUS_MAP: dict[str, ParcelStatus] = {
     "ZUGESTELLT": ParcelStatus.DELIVERED,
     "ZUGESTELLT_BRIEFKASTEN": ParcelStatus.DELIVERED,
     "ZUGESTELLT_PAKETSHOP": ParcelStatus.DELIVERED,
+    # Seen live 2026-10-03, and absent from every list the app itself carries:
+    # the account backend returns values the app does not enumerate, so this map
+    # can only ever grow from real parcels. Map each one explicitly — a
+    # substring rule on "ZUGESTELLT" would also swallow a future negated form
+    # and report an undelivered parcel as delivered.
+    "INT_ZUGESTELLT_ABLAGEORT": ParcelStatus.DELIVERED,
     "VOM_PAKETSHOP_ABGEHOLT": ParcelStatus.DELIVERED,
     "RETOURE_AUSLIEFERUNG_ZUM_ATG": ParcelStatus.RETURNING,
     "RETOURE_AUSLIEFERUNG_ZUM_ATG_NACH_SCHADEN": ParcelStatus.RETURNING,

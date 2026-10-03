@@ -226,6 +226,17 @@ def test_every_mapped_status_lands_on_a_canonical_value():
     assert ACCOUNT_STATUS_MAP["RUECKVERSAND_RETOURE"] is ParcelStatus.RETURNING
 
 
+def test_a_prefixed_delivered_status_seen_live_is_mapped():
+    """The backend returns codes the app never enumerates.
+
+    `INT_ZUGESTELLT_ABLAGEORT` (delivered at the agreed drop-off spot) appears
+    in no list inside the app, so it reached a real user as `unknown` first.
+    It is mapped explicitly rather than by matching on "ZUGESTELLT", which
+    would report a future negated form as delivered.
+    """
+    assert ACCOUNT_STATUS_MAP["INT_ZUGESTELLT_ABLAGEORT"] is ParcelStatus.DELIVERED
+
+
 def test_the_two_status_maps_are_separate_vocabularies():
     """German account codes must never resolve through the English map."""
     assert ACCOUNT_STATUS_MAP is not TRACKING_STATUS_MAP
