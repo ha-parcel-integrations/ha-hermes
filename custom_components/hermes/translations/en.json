@@ -4,15 +4,14 @@
     "step": {
       "user": {
         "title": "Set up Hermes",
-        "description": "Choose where Hermes parcels come from. Tracking codes need no account — you add the codes yourself. A Hermes account lists your incoming parcels automatically.",
         "menu_options": {
-          "tracking": "Tracking codes",
-          "account": "Hermes account"
+          "account": "Account (automatic import)",
+          "tracking": "Tracking codes"
         }
       },
       "account": {
-        "title": "Log in to Hermes",
-        "description": "Log in with your Hermes account **username** (not your email address). Your password is only used to log in and is not stored.",
+        "title": "Set up Hermes account",
+        "description": "Sign in once to import parcels from your Hermes account. Log in with your account **username**, not your email address. Your password is never stored.",
         "data": {
           "username": "Username",
           "password": "Password"

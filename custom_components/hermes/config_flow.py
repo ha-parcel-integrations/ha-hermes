@@ -80,7 +80,7 @@ class HermesConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Pick the source: tracking codes, or a Hermes account inbox."""
         return self.async_show_menu(
-            step_id="user", menu_options=[SOURCE_TRACKING, SOURCE_ACCOUNT]
+            step_id="user", menu_options=[SOURCE_ACCOUNT, SOURCE_TRACKING]
         )
 
     async def async_step_tracking(

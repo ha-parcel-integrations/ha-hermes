@@ -49,7 +49,7 @@ async def _pick(hass, source: str):
         DOMAIN, context={"source": "user"}
     )
     assert result["type"] == "menu"
-    assert result["menu_options"] == ["tracking", "account"]
+    assert result["menu_options"] == ["account", "tracking"]
     return await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": source}
     )

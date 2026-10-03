@@ -4,15 +4,14 @@
     "step": {
       "user": {
         "title": "Hermes einrichten",
-        "description": "Wähle, woher die Hermes-Pakete kommen. Für Sendungsnummern brauchst du kein Konto — du fügst die Nummern selbst hinzu. Ein Hermes-Konto listet deine eingehenden Pakete automatisch auf.",
         "menu_options": {
-          "tracking": "Sendungsnummern",
-          "account": "Hermes-Konto"
+          "account": "Konto (automatischer Import)",
+          "tracking": "Sendungsnummern"
         }
       },
       "account": {
-        "title": "Bei Hermes anmelden",
-        "description": "Melde dich mit dem **Benutzernamen** deines Hermes-Kontos an (nicht mit der E-Mail-Adresse). Dein Passwort wird nur zur Anmeldung verwendet und nicht gespeichert.",
+        "title": "Hermes-Konto einrichten",
+        "description": "Melde dich einmal an, um Pakete aus deinem Hermes-Konto zu importieren. Verwende den **Benutzernamen** deines Kontos, nicht deine E-Mail-Adresse. Dein Passwort wird nicht gespeichert.",
         "data": {
           "username": "Benutzername",
           "password": "Passwort"
