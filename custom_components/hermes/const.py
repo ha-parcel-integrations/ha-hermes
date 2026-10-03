@@ -47,6 +47,12 @@ CAPABILITIES_BY_VARIANT = {
     "Tracking": frozenset({"delivery_window", "url", "history"}),
     "Account": frozenset({"pickup_point", "url", "history"}),
 }
+
+# Fields not confirmed yet — the docs site shows them as "awaiting data".
+# Move a field into the declaration above once a real parcel shows it.
+PENDING_CAPABILITIES_BY_VARIANT = {
+    "Account": frozenset({"delivery_window"}),
+}
 CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 
 # Hermes Germany's consumer **Paket** track-and-trace endpoint. This is the same
