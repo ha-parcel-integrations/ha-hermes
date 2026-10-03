@@ -82,6 +82,15 @@ different niche service — do not "fix" the integration to use it.
     returned `INT_ZUGESTELLT_ABLAGEORT`, which appears nowhere in the app
     binary. Map each new code explicitly as it surfaces; never pattern-match on
     `ZUGESTELLT`, which would swallow a negated form.
+- **Every account parcel is treated as incoming — unverified, not decided.**
+  Hermes' app has three lists (`ShipmentListType` = `INCOMING`/`OUTGOING`/
+  `RETURN`), but no captured parcel was ever outgoing and the response carries
+  no `shipmentListType`, so there is no confirmed discriminator. Defaulting to
+  incoming is the suite's safe default (an unrecognised value must never make
+  parcels disappear), *not* evidence Hermes has no outgoing parcels — a user who
+  sends parcels would currently get the full incoming event set for them. Do not
+  invent a discriminator from `shipmentType`'s `IN_` prefix without a real
+  outgoing parcel; see `carrier-research/hermes/api/account.md`.
 - Root `api.py` / `coordinator.py` / `parcels.py` are re-export shims for old
   import paths — keep them. Assigning module state through `parcels.py` does not
   reach the real module (it copies names); use `tracking.parcels`.
