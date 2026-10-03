@@ -9,7 +9,7 @@ from custom_components.hermes.const import (
     DOMAIN,
 )
 
-from .payloads import active_sample
+from .tracking.payloads import active_sample
 
 _SAMPLE = active_sample()
 
@@ -23,7 +23,7 @@ async def _setup(hass, parcels: list[dict] | None = None) -> MockConfigEntry:
     )
     entry.add_to_hass(hass)
     with patch(
-        "custom_components.hermes.api.HermesApiClient.async_get_parcel",
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
         new=AsyncMock(return_value=_SAMPLE),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
@@ -34,7 +34,7 @@ async def _setup(hass, parcels: list[dict] | None = None) -> MockConfigEntry:
 async def test_track_parcel_adds_to_options(hass):
     entry = await _setup(hass)
     with patch(
-        "custom_components.hermes.api.HermesApiClient.async_get_parcel",
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
         new=AsyncMock(return_value=_SAMPLE),
     ):
         await hass.services.async_call(
@@ -52,7 +52,7 @@ async def test_track_parcel_adds_to_options(hass):
 async def test_track_parcel_normalizes_code(hass):
     entry = await _setup(hass)
     with patch(
-        "custom_components.hermes.api.HermesApiClient.async_get_parcel",
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
         new=AsyncMock(return_value=_SAMPLE),
     ):
         await hass.services.async_call(
@@ -73,7 +73,7 @@ async def test_track_parcel_normalizes_code(hass):
 async def test_track_parcel_duplicate_is_noop(hass):
     entry = await _setup(hass)
     with patch(
-        "custom_components.hermes.api.HermesApiClient.async_get_parcel",
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
         new=AsyncMock(return_value=_SAMPLE),
     ):
         for _ in range(2):
@@ -93,7 +93,7 @@ async def test_untrack_parcel_removes_from_options(hass):
         hass, parcels=[{CONF_TRACKING_CODE: "12345678909999"}]
     )
     with patch(
-        "custom_components.hermes.api.HermesApiClient.async_get_parcel",
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
         new=AsyncMock(return_value=_SAMPLE),
     ):
         await hass.services.async_call(
@@ -112,7 +112,7 @@ async def test_untrack_unknown_code_is_noop(hass):
         hass, parcels=[{CONF_TRACKING_CODE: "12345678909999"}]
     )
     with patch(
-        "custom_components.hermes.api.HermesApiClient.async_get_parcel",
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
         new=AsyncMock(return_value=_SAMPLE),
     ):
         await hass.services.async_call(

@@ -8,10 +8,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import HermesApiClient
 from .const import PLATFORMS
-from .coordinator import HermesCoordinator
 from .services import async_setup_services, async_unload_services
+from .tracking.api import HermesApiClient
+from .tracking.coordinator import HermesCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 

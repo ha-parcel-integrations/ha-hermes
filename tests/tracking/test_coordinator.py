@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.hermes.api import HermesApiError
 from custom_components.hermes.const import (
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
@@ -21,7 +20,8 @@ from custom_components.hermes.const import (
     STAGGER_MINUTES,
     ParcelStatus,
 )
-from custom_components.hermes.coordinator import (
+from custom_components.hermes.tracking.api import HermesApiError
+from custom_components.hermes.tracking.coordinator import (
     HermesCoordinator,
     _hottest_tier_minutes,
     _in_quiet_window,

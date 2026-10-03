@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 import pytest
 
-from custom_components.hermes.api import (
+from custom_components.hermes.tracking.api import (
     HermesApiClient,
     HermesApiError,
 )
