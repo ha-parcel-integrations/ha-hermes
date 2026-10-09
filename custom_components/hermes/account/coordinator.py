@@ -93,7 +93,7 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
             raise ConfigEntryAuthFailed("Hermes account needs reauthentication") from err
         except HermesAccountCompatibilityError as err:
             raise UpdateFailed(
-                "Hermes rejected the app credentials; the integration needs an update"
+                "Hermes refused the account request before checking the login"
             ) from err
         except HermesAccountApiError as err:
             raise UpdateFailed("Unable to update Hermes account inbox") from err

@@ -128,7 +128,7 @@ async def test_same_account_cannot_be_added_twice(hass):
     ("error", "expected"),
     [
         (HermesAccountInvalidCredentials("x"), "invalid_auth"),
-        (HermesAccountCompatibilityError("x"), "update_required"),
+        (HermesAccountCompatibilityError("x"), "request_refused"),
         (HermesAccountApiError("x"), "cannot_connect"),
     ],
 )
@@ -190,7 +190,7 @@ async def test_reauth_asks_only_for_the_password_and_keeps_the_entry(hass):
     ("error", "expected"),
     [
         (HermesAccountInvalidCredentials("x"), "invalid_auth"),
-        (HermesAccountCompatibilityError("x"), "update_required"),
+        (HermesAccountCompatibilityError("x"), "request_refused"),
         (HermesAccountApiError("x"), "cannot_connect"),
     ],
 )

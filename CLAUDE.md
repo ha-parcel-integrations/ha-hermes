@@ -55,10 +55,15 @@ different niche service — do not "fix" the integration to use it.
   `weight`, `dimensions` stay `None`; `planned_from` is read defensively.
 - **`account/`** — the logged-in inbox source. Login identifier is the account
   **username**, not an email; unique id `account:<lowercased username>`. Only
-  the token pair is persisted. A rejected app credential is an HTML 403 from the
-  gateway before the password is checked: it is a *compatibility* failure
-  (`update_required`), never a reauth prompt — branch on the body, not the
-  status. The account coordinator raises `ConfigEntryAuthFailed` itself.
+  the token pair is persisted. An HTML 403 from the gateway arrives before the
+  password is checked, so it is never a reauth prompt — branch on the body, not
+  the status (error key `request_refused`, raised as
+  `HermesAccountCompatibilityError`). Its cause is **not** knowable from the
+  response: a rotated app key, a WAF/geo/IP block and a transient refusal all
+  look identical, so never tell the user to "wait for a release" — the client
+  logs the status + content-type + a truncated body snippet (`_snippet`) so a
+  user's debug log can tell them apart. The account coordinator raises
+  `ConfigEntryAuthFailed` itself.
   `sender` is `atg.companyName` — **ATG is the Auftraggeber, the shipper**, not
   the delivering partner (four real parcels named Flaconi, QVC, Deutsche Telekom
   and "Privatversand"). `pickup_point` is built from `address` **only when

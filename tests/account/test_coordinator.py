@@ -93,7 +93,7 @@ async def test_rejected_tokens_become_config_entry_auth_failed(hass):
 async def test_compatibility_failure_is_update_failed_not_reauth(hass):
     coordinator, client = _coordinator(hass)
     client.async_get_shipments.side_effect = HermesAccountCompatibilityError("x")
-    with pytest.raises(UpdateFailed, match="needs an update"):
+    with pytest.raises(UpdateFailed, match="refused the account request"):
         await coordinator._async_update_data()
 
 

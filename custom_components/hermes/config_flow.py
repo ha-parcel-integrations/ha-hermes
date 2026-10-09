@@ -130,7 +130,7 @@ class HermesConfigFlow(ConfigFlow, domain=DOMAIN):
                 except HermesAccountInvalidCredentials:
                     errors["base"] = "invalid_auth"
                 except HermesAccountCompatibilityError:
-                    errors["base"] = "update_required"
+                    errors["base"] = "request_refused"
                 except HermesAccountApiError:
                     errors["base"] = "cannot_connect"
                 else:
@@ -178,7 +178,7 @@ class HermesConfigFlow(ConfigFlow, domain=DOMAIN):
             except HermesAccountInvalidCredentials:
                 errors["base"] = "invalid_auth"
             except HermesAccountCompatibilityError:
-                errors["base"] = "update_required"
+                errors["base"] = "request_refused"
             except HermesAccountApiError:
                 errors["base"] = "cannot_connect"
             else:

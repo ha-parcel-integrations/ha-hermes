@@ -32,7 +32,7 @@
     "error": {
       "invalid_auth": "The username or password was not accepted.",
       "cannot_connect": "Could not reach Hermes. Try again later.",
-      "update_required": "Hermes refused this integration's app access. The integration needs an update — wait for a new release; logging in again will not help."
+      "request_refused": "Hermes refused this request before it checked your login, so signing in again will not help. Enable debug logging to capture the exact response, and report it if the problem persists."
     }
   },
   "options": {

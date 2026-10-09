@@ -32,7 +32,7 @@
     "error": {
       "invalid_auth": "De gebruikersnaam of het wachtwoord is niet geaccepteerd.",
       "cannot_connect": "Hermes is niet bereikbaar. Probeer het later opnieuw.",
-      "update_required": "Hermes heeft de app-toegang van deze integratie geweigerd. De integratie heeft een update nodig — wacht op een nieuwe versie; opnieuw inloggen helpt niet."
+      "request_refused": "Hermes heeft dit verzoek geweigerd nog vóór je login werd gecontroleerd, dus opnieuw inloggen helpt niet. Zet debug-logging aan om de exacte respons vast te leggen en meld die als het probleem blijft."
     }
   },
   "options": {

@@ -32,7 +32,7 @@
     "error": {
       "invalid_auth": "Benutzername oder Passwort wurde nicht akzeptiert.",
       "cannot_connect": "Hermes ist nicht erreichbar. Versuche es später erneut.",
-      "update_required": "Hermes hat den App-Zugriff dieser Integration abgelehnt. Die Integration braucht ein Update — warte auf eine neue Version; eine erneute Anmeldung hilft nicht."
+      "request_refused": "Hermes hat diese Anfrage abgelehnt, bevor deine Anmeldung geprüft wurde — eine erneute Anmeldung hilft also nicht. Aktiviere das Debug-Log, um die genaue Antwort zu erfassen, und melde sie, falls das Problem bestehen bleibt."
     }
   },
   "options": {

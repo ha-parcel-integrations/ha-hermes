@@ -6,6 +6,7 @@ normalisation belongs in ``parcels.py``.
 """
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -16,6 +17,8 @@ from ..const import (
     ACCOUNT_API_URL,
     ACCOUNT_APP_VERSION,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 TokenCallback = Callable[[dict[str, Any]], Awaitable[None]]
 
@@ -42,7 +45,12 @@ class HermesAccountReauthRequired(HermesAccountApiError):
 
 
 class HermesAccountCompatibilityError(HermesAccountApiError):
-    """The gateway refused the app credentials; the integration needs an update."""
+    """The gateway refused the request with an HTML page before checking auth."""
+
+
+def _snippet(body: str, *, limit: int = 200) -> str:
+    """Collapse a gateway response body to a single short diagnostic line."""
+    return " ".join(body.split())[:limit]
 
 
 def _is_html(content_type: str | None, body: str) -> bool:
@@ -119,6 +127,17 @@ class HermesAccountClient:
                     # before it checks the password, so the body — not just the
                     # status — decides whether this is the user's problem.
                     if _is_html(response.content_type, text):
+                        # Why we can't name a cause: a rotated app key, a
+                        # WAF/geo/IP block and a transient gateway refusal all
+                        # surface as the same pre-auth HTML page. Log what it
+                        # actually returned so a user's log can tell them apart.
+                        _LOGGER.warning(
+                            "Hermes gateway refused %s with an HTML %s (%s): %s",
+                            path,
+                            response.status,
+                            response.content_type,
+                            _snippet(text),
+                        )
                         raise HermesAccountCompatibilityError(
                             "account API rejected app compatibility",
                             status_code=response.status,
