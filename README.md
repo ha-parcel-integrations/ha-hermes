@@ -95,7 +95,7 @@ Add the integration via **Settings → Devices & Services → Add Integration �
 
 **Hermes account** — enter your account username and password. Only the login tokens are stored, never the password; if Hermes stops accepting them you are asked for the password again. You can add more than one account, and an account can sit next to the tracking hub. An account has no tracked-parcel list — its parcels come from your account — so its **Configure** dialog offers settings only, and the `track_parcel` / `untrack_parcel` services only ever act on the tracking hub.
 
-Parcels from a tracking code carry the sender when Hermes names one, and the expected delivery window Hermes forecasts — a time span on a delivery day, or the moment a parcel becomes collectable at a PaketShop. The receiver, the PaketShop's own name and address, the weight and the dimensions are not on this route, so those fields stay empty.
+Parcels from a tracking code carry the sender when Hermes names one. The integration also reads the delivery window Hermes forecasts — a time span on a delivery day, or the moment a parcel becomes collectable at a PaketShop — but no parcel has been seen with one filled in yet, so expect it to stay empty until someone reports otherwise. The receiver, the PaketShop's own name and address, the weight and the dimensions are not on this route, so those fields stay empty.
 
 Parcels from an account carry the sender (the shop or person who sent it), the receiver's first name when Hermes provides it, and — for a parcel routed to a PaketShop — that shop's name and address as the pickup point. Hermes does not report a weight, dimensions or an expected delivery window for account parcels, so those fields stay empty.
 

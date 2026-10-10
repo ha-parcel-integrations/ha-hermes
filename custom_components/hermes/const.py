@@ -39,18 +39,25 @@ KNOWN_CAPABILITIES = frozenset(
 # the comparison table on the docs site. Keep in lockstep with the matching
 # normaliser (tracking/parcels.py, account/parcels.py): everything not listed
 # here comes back as a literal None there. Neither source exposes weight or
-# dimensions. The keyless route reads its delivery window from the widget's own
-# `forecast` block and has no pickup point; the account route names the
-# PaketShop a parcel went to, but has never been seen with a populated ETA, so
-# it claims no delivery window.
+# dimensions, and neither has a confirmed delivery window; the keyless route
+# has no pickup point, while the account route names the PaketShop a parcel
+# went to.
 CAPABILITIES_BY_VARIANT = {
-    "Tracking": frozenset({"delivery_window", "url", "history"}),
+    "Tracking": frozenset({"url", "history"}),
     "Account": frozenset({"pickup_point", "url", "history"}),
 }
 
 # Fields not confirmed yet — the docs site shows them as "awaiting data".
 # Move a field into the declaration above once a real parcel shows it.
+#
+# Both sources read a delivery window and neither has ever returned one. On the
+# keyless route the field names are the carrier's own (`forecast`, read off its
+# tracking widget), but every parcel so far carried an empty block; on the
+# account route `bookedEdl.deliveryDate` is a requested day, not a forecast.
+# Claiming the capability while populating neither field is the misreport this
+# split exists to prevent.
 PENDING_CAPABILITIES_BY_VARIANT = {
+    "Tracking": frozenset({"delivery_window"}),
     "Account": frozenset({"delivery_window"}),
 }
 CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]

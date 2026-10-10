@@ -59,7 +59,10 @@ different niche service — do not "fix" the integration to use it.
   `staticForecast` is ignored on purpose: it is a bucket
   (`PARCELSHOP_1_2_DAYS`), not a timestamp. **No real parcel has been seen with
   a populated `forecast` yet** — the field names come from the carrier's own
-  `tnt-bundle-v2.js`, so the window may still be dead code in practice.
+  `tnt-bundle-v2.js`, so the window may still be dead code in practice, and
+  `delivery_window` is declared **pending** for both sources rather than
+  claimed. Move it into `CAPABILITIES_BY_VARIANT` the day a real parcel returns
+  one, not before.
   `_KNOWN_PAYLOAD_KEYS` lists every other top-level field a real 200 carries
   with the reason it is *not* published — chatbot/customer-service context
   (`ablt`, `latestRelatedBarcode`, `n1*`), a website feature

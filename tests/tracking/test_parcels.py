@@ -11,10 +11,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hermes.const import (
     CAPABILITIES,
+    CAPABILITIES_BY_VARIANT,
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     DOMAIN,
     KNOWN_CAPABILITIES,
+    PENDING_CAPABILITIES_BY_VARIANT,
     ParcelStatus,
 )
 from custom_components.hermes.tracking import parcels as parcels_module
@@ -297,6 +299,18 @@ def test_normalize_history_is_opt_in():
 def test_capabilities_are_known_values():
     """A typo here would silently misreport this carrier on the docs site."""
     assert CAPABILITIES <= KNOWN_CAPABILITIES
+    for variant, pending in PENDING_CAPABILITIES_BY_VARIANT.items():
+        assert pending <= KNOWN_CAPABILITIES
+        # A field cannot be both claimed and awaiting data.
+        assert not (pending & CAPABILITIES_BY_VARIANT[variant])
+
+
+def test_delivery_window_is_awaiting_data_on_both_sources():
+    """The window is read on both routes but has never come back populated —
+    claiming it on the docs site would promise an always-empty field."""
+    for variant in ("Tracking", "Account"):
+        assert "delivery_window" not in CAPABILITIES_BY_VARIANT[variant]
+        assert "delivery_window" in PENDING_CAPABILITIES_BY_VARIANT[variant]
 
 
 def test_normalize_active_parcel():
