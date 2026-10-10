@@ -278,7 +278,51 @@ def test_normalize_active_parcel():
     assert parcel["status"] == ParcelStatus.OUT_FOR_DELIVERY
     assert parcel["delivered"] is False
     assert parcel["delivered_at"] is None
-    # No ETA window on the confirmed T&T model.
+    # The sample carries no forecast block, so there is no window to publish.
+    assert parcel["planned_from"] is None
+    assert parcel["planned_to"] is None
+
+
+def test_normalize_reads_the_forecast_window():
+    raw = active_sample()
+    raw["forecast"] = {
+        "deliveryTimeFromUTC": "2026-07-30T10:00:00Z",
+        "deliveryTimeToUTC": "2026-07-30T12:00:00Z",
+    }
+    parcel = normalize_parcel(raw)
+
+    assert parcel["planned_from"] == "2026-07-30T10:00:00Z"
+    assert parcel["planned_to"] == "2026-07-30T12:00:00Z"
+
+
+def test_normalize_pickup_ready_is_a_point_estimate():
+    """A parcel waiting in a shop gets a ready-from moment, not a window."""
+    raw = pickup_sample()
+    raw["forecast"] = {"pickupReadyFromUTC": "2026-07-30T09:00:00Z"}
+    parcel = normalize_parcel(raw)
+
+    assert parcel["planned_from"] == "2026-07-30T09:00:00Z"
+    assert parcel["planned_to"] is None
+
+
+def test_normalize_ignores_a_static_forecast_bucket():
+    """``staticForecast`` is a vague bucket, not a timestamp."""
+    raw = active_sample()
+    raw["forecast"] = {"staticForecast": "PARCELSHOP_1_2_DAYS"}
+    parcel = normalize_parcel(raw)
+
+    assert parcel["planned_from"] is None
+    assert parcel["planned_to"] is None
+
+
+def test_normalize_clears_the_window_once_delivered():
+    raw = delivered_sample()
+    raw["forecast"] = {
+        "deliveryTimeFromUTC": "2026-07-30T10:00:00Z",
+        "deliveryTimeToUTC": "2026-07-30T12:00:00Z",
+    }
+    parcel = normalize_parcel(raw)
+
     assert parcel["planned_from"] is None
     assert parcel["planned_to"] is None
 

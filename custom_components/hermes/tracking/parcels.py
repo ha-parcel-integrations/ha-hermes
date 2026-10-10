@@ -215,6 +215,32 @@ def tracking_url(tracking_code: str | None) -> str | None:
     return TRACKING_URL.format(tracking_code=tracking_code)
 
 
+def _read_forecast(forecast: Any) -> tuple[str | None, str | None]:
+    """Return ``(planned_from, planned_to)`` from Hermes' ``forecast`` block.
+
+    ``deliveryTimeFromUTC``/``deliveryTimeToUTC`` are a genuine window — the
+    tracking widget renders them as "ca. HH:MM - HH:MM". A parcel waiting in a
+    PaketShop gets ``pickupReadyFromUTC`` instead ("expected ready for
+    collection"), a point estimate, so it fills ``planned_from`` alone.
+    ``staticForecast`` is deliberately ignored: it is a vague bucket
+    (``PARCELSHOP_1_2_DAYS``), not a timestamp.
+    """
+    if not isinstance(forecast, dict):
+        return None, None
+
+    def scalar(key: str) -> str | None:
+        value = forecast.get(key)
+        return (
+            to_iso_timestamp(value) if isinstance(value, (str, int, float)) else None
+        )
+
+    window_from = scalar("deliveryTimeFromUTC")
+    window_to = scalar("deliveryTimeToUTC")
+    if window_from and window_to:
+        return window_from, window_to
+    return window_from or scalar("pickupReadyFromUTC"), None
+
+
 def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     """Return a carrier-agnostic parcel dict with the payload under ``raw``.
 
@@ -239,7 +265,8 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
       time). This keeps ``delivered`` correct even while ``status`` is
       ``unknown`` for a status we haven't mapped.
     * ``planned_to`` is ``None`` for a point estimate; only fill it when the
-      carrier genuinely reports a *window*.
+      carrier genuinely reports a *window* — Hermes does, in
+      ``forecast.deliveryTimeFromUTC``/``deliveryTimeToUTC``.
     * ``weight`` is kilograms, ``dimensions`` centimetres (see
       :func:`format_dimensions`).
     * ``history`` is ``None`` when the option is off — the key still exists.
@@ -259,13 +286,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     attributes = attributes if isinstance(attributes, dict) else {}
     delivered = status is ParcelStatus.DELIVERED or bool(attributes.get("delivered"))
 
-    # ETA: the confirmed typed model (barcode + parcelProgress) carries no ETA,
-    # but the myhermes.de widget reads an ``eta`` / ``deliveryForecast`` field a
-    # real 200 may include. Read it defensively — only a scalar (ISO string /
-    # epoch) is used; anything else (or absent) yields ``None``. Confirm the
-    # exact field/shape against a real parcel (see TODO.md).
-    eta = raw.get("eta") or raw.get("deliveryForecast")
-    planned_from = to_iso_timestamp(eta) if isinstance(eta, (str, int, float)) else None
+    planned_from, planned_to = _read_forecast(raw.get("forecast"))
 
     # ``atg.companyName`` is the sender name when Hermes provides it. The other
     # party and pickup-point fields remain unavailable on this endpoint.
@@ -287,7 +308,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
             else None
         ),
         "planned_from": None if delivered else planned_from,
-        "planned_to": None,
+        "planned_to": None if delivered else planned_to,
         "pickup": status is ParcelStatus.AT_PICKUP_POINT,
         "pickup_point": None,
         "url": tracking_url(tracking_code),

@@ -606,12 +606,12 @@ async def test_fires_delivery_time_changed_event(hass):
     )
 
     first = active_sample()
-    first["eta"] = "2026-04-29T13:00:00Z"
+    first["forecast"] = {"deliveryTimeFromUTC": "2026-04-29T13:00:00Z"}
     client.async_get_parcel.return_value = first
     await coordinator._async_update_data()  # first refresh: suppressed
 
     moved = active_sample()
-    moved["eta"] = "2026-04-29T16:00:00Z"
+    moved["forecast"] = {"deliveryTimeFromUTC": "2026-04-29T16:00:00Z"}
     client.async_get_parcel.return_value = moved
     await coordinator._async_update_data()
     await hass.async_block_till_done()
@@ -634,7 +634,7 @@ async def test_losing_the_eta_is_silent(hass):
     )
 
     first = active_sample()
-    first["eta"] = "2026-04-29T13:00:00Z"
+    first["forecast"] = {"deliveryTimeFromUTC": "2026-04-29T13:00:00Z"}
     client.async_get_parcel.return_value = first
     await coordinator._async_update_data()
 

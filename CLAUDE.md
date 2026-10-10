@@ -52,7 +52,22 @@ different niche service — do not "fix" the integration to use it.
   are confirmed by three independent clients and a real 14-digit parcel.
   Account-less (`track_parcel` / `untrack_parcel` services, tracking hubs only).
   The sender is populated when Hermes provides it; `receiver`, `pickup_point`,
-  `weight`, `dimensions` stay `None`; `planned_from` is read defensively.
+  `weight`, `dimensions` stay `None`. `planned_from`/`planned_to` come from the
+  payload's `forecast` block — `deliveryTimeFromUTC`/`deliveryTimeToUTC` is the
+  real window the tracking widget renders, and `pickupReadyFromUTC` is a point
+  estimate for a parcel waiting in a shop, so it fills `planned_from` alone.
+  `staticForecast` is ignored on purpose: it is a bucket
+  (`PARCELSHOP_1_2_DAYS`), not a timestamp. **No real parcel has been seen with
+  a populated `forecast` yet** — the field names come from the carrier's own
+  `tnt-bundle-v2.js`, so the window may still be dead code in practice.
+  `_KNOWN_PAYLOAD_KEYS` lists every other top-level field a real 200 carries
+  with the reason it is *not* published — chatbot/customer-service context
+  (`ablt`, `latestRelatedBarcode`, `n1*`), a website feature
+  (`livetrackingOptions`), a preference booking (`bookedEdl`), or the widget's
+  derived view state (`viewParameters`, which only restates `parcelStatus` and
+  `parcelAttributes.delivered`). Don't wire one up without saying what it adds
+  that we don't already publish, and keep the set complete: anything missing
+  from it makes every user's log carry the unconfirmed-fields warning forever.
 - **`account/`** — the logged-in inbox source. Login identifier is the account
   **username**, not an email; unique id `account:<lowercased username>`. Only
   the token pair is persisted. An HTML 403 from the gateway arrives before the
