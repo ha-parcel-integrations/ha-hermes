@@ -23,7 +23,9 @@ NEW_ISSUE_URL = (
 # Keyless route: Hermes ``parcelStatus`` (the stable English enum on each ``parcelProgress``
 # event) → canonical ParcelStatus. Seeded from the values mapped in
 # ``itsvic-dev/deliveries`` (HermesDeliveryService.kt) plus the pickup family
-# from the app decompile; extend it as real parcels surface more. An unmapped
+# from the app decompile, extended 2026-10-10 with the codes
+# ``plhery/universal-parcel-scraper`` (``carriers/hermes-de/``) read off the
+# public recipient bundle; extend it as real parcels surface more. An unmapped
 # value surfaces as ``unknown`` plus a one-shot warning that asks the user to
 # report it — do not map the localised ``status`` / ``historyText`` here, only
 # the stable ``parcelStatus`` code.
@@ -32,9 +34,12 @@ TRACKING_STATUS_MAP: dict[str, ParcelStatus] = {
     "ORDER_INFO_RECEIVED": ParcelStatus.REGISTERED,
     "PREANNOUNCED": ParcelStatus.REGISTERED,
     "PARCELSHOP_DROP_OFF": ParcelStatus.REGISTERED,
+    "ATG_OUT_OF_WAREHOUSE": ParcelStatus.REGISTERED,
     "SHIPMENT_PICKED_UP": ParcelStatus.IN_TRANSIT,
     "TAKEN_OVER_BY_HERMES": ParcelStatus.IN_TRANSIT,
     "HANDED_OVER_TO_HERMES": ParcelStatus.IN_TRANSIT,
+    "HANDED_OVER": ParcelStatus.IN_TRANSIT,
+    "PICKED_UP": ParcelStatus.IN_TRANSIT,
     "PARCELSHOP_COLLECTED_BY_DRIVER": ParcelStatus.IN_TRANSIT,
     "IN_TRANSIT": ParcelStatus.IN_TRANSIT,
     "SORTED": ParcelStatus.IN_TRANSIT,
@@ -45,6 +50,10 @@ TRACKING_STATUS_MAP: dict[str, ParcelStatus] = {
     "OUT_FOR_DELIVERY": ParcelStatus.OUT_FOR_DELIVERY,
     "NEXT_STOP": ParcelStatus.OUT_FOR_DELIVERY,
     "DELIVERED_HOMEDELIVERY": ParcelStatus.DELIVERED,
+    # Seen live 2026-10-10 on a real parcel, with the German wording "Die
+    # Sendung wurde an der Empfangsadresse zugestellt" — handed over at the
+    # recipient's own address, so plain delivered.
+    "DELIVERED_INHOUSE": ParcelStatus.DELIVERED,
     "DELIVERED_NEIGHBOUR": ParcelStatus.DELIVERED,
     "DELIVERED_PARCELSHOP": ParcelStatus.DELIVERED,
     "DELIVERED_PARCELBOX": ParcelStatus.DELIVERED,
@@ -55,10 +64,13 @@ TRACKING_STATUS_MAP: dict[str, ParcelStatus] = {
     "COLLECTED": ParcelStatus.DELIVERED,
     "PARCELSHOP_ITEMS_FOR_COLLECTION": ParcelStatus.AT_PICKUP_POINT,
     "READY_FOR_COLLECTION": ParcelStatus.AT_PICKUP_POINT,
+    "READY_FOR_PICKUP": ParcelStatus.AT_PICKUP_POINT,
     "RETURN_DELIVERED_TO_SENDER": ParcelStatus.RETURNING,
     "RETURN_TO_SENDER": ParcelStatus.RETURNING,
     "RETURN": ParcelStatus.RETURNING,
+    "RETOURE_DELIVERED": ParcelStatus.RETURNING,
     "NOT_DELIVERABLE": ParcelStatus.PROBLEM,
+    "DELIVERY_FAILED": ParcelStatus.PROBLEM,
     "UNKNOWN_WHEREABOUTS": ParcelStatus.PROBLEM,
 }
 
