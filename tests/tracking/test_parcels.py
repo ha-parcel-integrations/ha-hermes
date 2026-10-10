@@ -139,6 +139,32 @@ def test_payload_shape_silent_for_known_fields(caplog):
     assert "have not confirmed against a real" not in caplog.text
 
 
+def test_payload_shape_silent_for_a_whole_real_payload(caplog):
+    """Every top-level field a real 200 carries is accounted for, mapped or
+    deliberately not — so a user with a normal parcel never sees this warning.
+    """
+    parcels_module._payload_shape_logged = False
+    raw = dict.fromkeys(
+        [
+            "ablt",
+            "address",
+            "atg",
+            "barcode",
+            "bookedEdl",
+            "forecast",
+            "latestRelatedBarcode",
+            "livetrackingOptions",
+            "n1ParcelShopEligible",
+            "n1RedirectedToParcelShop",
+            "parcelAttributes",
+            "parcelProgress",
+            "viewParameters",
+        ]
+    )
+    normalize_parcel(raw)
+    assert "have not confirmed against a real" not in caplog.text
+
+
 # ---------------------------------------------------------------------------
 # timestamp helpers
 # ---------------------------------------------------------------------------

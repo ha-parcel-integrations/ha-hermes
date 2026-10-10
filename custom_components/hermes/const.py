@@ -77,8 +77,13 @@ CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 #   fired); the actual localised text is `historyText`. `parcelAttributes`
 #   is a resilient secondary signal for `delivered`. Real 200s also carry
 #   `ablt`, `address`, `atg`, `bookedEdl`, `forecast`, `latestRelatedBarcode`,
-#   `livetrackingOptions`, `n1ParcelShopEligible`, `viewParameters` — none
-#   confirmed to carry sender/recipient/eta/parcelShop yet (open: issue #3).
+#   `livetrackingOptions`, `n1ParcelShopEligible`, `n1RedirectedToParcelShop`,
+#   `viewParameters`. `atg` carries the sender and `forecast` the delivery
+#   window (`deliveryTimeFromUTC`/`deliveryTimeToUTC`, or `pickupReadyFromUTC`
+#   for a parcel waiting in a shop). The others are accounted for and
+#   deliberately not mapped — see `_KNOWN_PAYLOAD_KEYS` in tracking/parcels.py.
+#   The receiver and the PaketShop's address live behind the widget's
+#   postcode-protected path, which we do not call (open: issue #3).
 # * **Rate limits / throttling:** none observed — dynamic status-driven polling
 #   (const.py's HOT_/MID_INTERVAL_MINUTES) applies unconditionally, same as
 #   the other keyless carriers.

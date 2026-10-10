@@ -43,14 +43,47 @@ _STATUS_MAP = TRACKING_STATUS_MAP
 # only once per HA session instead of on every poll.
 _unmapped_statuses_logged: set[str] = set()
 
-# The confirmed typed model is ``{barcode, parcelProgress, parcelAttributes}``;
-# a real 200 (ha-hermes#1) also carries ``ablt``, ``address``, ``atg``,
-# ``bookedEdl``, ``forecast``, ``latestRelatedBarcode``, ``livetrackingOptions``,
-# ``n1ParcelShopEligible``, ``viewParameters`` — none yet confirmed to carry
-# sender/recipient/eta/parcelShop (open: issue #3). Any field beyond the known
-# set logs once — keys only, never values (they can be personal) — so a
-# tester can confirm what we should wire up next. See NEW_ISSUE_URL.
-_KNOWN_PAYLOAD_KEYS = {"atg", "barcode", "parcelProgress", "parcelAttributes"}
+# The full top-level set a real 200 carries (ha-hermes#1), and what each one is
+# for. ``barcode``, ``parcelProgress``, ``parcelAttributes``, ``atg`` (sender)
+# and ``forecast`` (the ETA window) are the ones we publish. The rest are read
+# off the tracking widget's own bundle and deliberately not mapped:
+#
+# * ``ablt`` / ``latestRelatedBarcode`` / ``n1ParcelShopEligible`` /
+#   ``n1RedirectedToParcelShop`` — the widget passes these to its chatbot and
+#   customer-service embed only. Nothing canonical, and the related barcode is
+#   another shipment, so publishing it as ``barcode`` would mislabel the parcel.
+# * ``address`` — on this keyless route it carries ``addressType`` alone. Its
+#   receiver name, street, PaketShop opening hours and live-tracking sub-block
+#   only arrive on the widget's postcode-protected path, which we do not call,
+#   so there is still no ``receiver`` or ``pickup_point`` here (issue #3).
+# * ``bookedEdl`` — a delivery-preference booking, the same class of event as
+#   the deliberately unmapped ``EDL_BOOKED_DROPOFF`` status.
+# * ``livetrackingOptions`` — whether the courier's live map is offered. A
+#   website feature; the canonical shape has no field for it.
+# * ``viewParameters`` — the widget's own derived view state
+#   (``collected`` / ``readyForCollection`` / ``deliveryFailedAttempt`` and
+#   their timestamps). Every one of them restates something ``parcelStatus``
+#   and ``parcelAttributes.delivered`` already tell us, so reading it would add
+#   a second, disagreeing source for the same answer.
+#
+# A field beyond this set still logs once — keys only, never values (they can be
+# personal) — so a tester can tell us about a genuinely new one. See
+# NEW_ISSUE_URL.
+_KNOWN_PAYLOAD_KEYS = {
+    "ablt",
+    "address",
+    "atg",
+    "barcode",
+    "bookedEdl",
+    "forecast",
+    "latestRelatedBarcode",
+    "livetrackingOptions",
+    "n1ParcelShopEligible",
+    "n1RedirectedToParcelShop",
+    "parcelAttributes",
+    "parcelProgress",
+    "viewParameters",
+}
 _payload_shape_logged = False
 
 
