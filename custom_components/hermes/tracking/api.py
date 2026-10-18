@@ -21,14 +21,11 @@ from ..const import TRACKING_API_URL
 
 _LOGGER = logging.getLogger(__name__)
 
-# Sent to look like the myhermes.de tracking widget rather than a bare client.
-# The endpoint is keyless, but a plausible UA + Referer avoids edge heuristics.
+# Sent to look like the myhermes.de tracking widget. The endpoint is keyless
+# and answers HA's own User-Agent, so none is spoofed.
 _REQUEST_HEADERS = {
     "Accept": "application/json",
     "X-Language": "de",
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0"
-    ),
     "Referer": "https://www.myhermes.de/",
 }
 
