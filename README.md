@@ -5,6 +5,8 @@
 [![HACS](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> 📦 Part of [**ha-parcel-integrations**](https://ha-parcel-integrations.github.io/), a family of package-tracking integrations for Home Assistant that all publish the same parcel format, statuses and events, so they plug into cross-carrier automations and the optional [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator). Browse the other carriers on the website.
+>
 > 💬 Questions or feedback? Join the discussion on the [Home Assistant community](https://community.home-assistant.io/t/packages-postnl-dhl-nl-dpd-and-gls-parcel-integration/112433/).
 
 A custom Home Assistant integration that tracks your [Hermes](https://www.myhermes.de) (Germany, "Hermes Paket") parcels, from either of two sources:
@@ -13,8 +15,6 @@ A custom Home Assistant integration that tracks your [Hermes](https://www.myherm
 - **Hermes account** — log in with your Hermes account and your incoming parcels appear on their own, no codes to type.
 
 For tracking codes: Most codes are 14 digits; some carry a single leading letter (e.g. `H1003660779926301068`) — enter it exactly as shown, including that letter.
-
-Part of the [ha-parcel-integrations](https://ha-parcel-integrations.github.io/) family: it publishes the same canonical parcel format, statuses and events as the other carrier integrations, so it plugs straight into the [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) and cross-carrier automations.
 
 > ### ℹ️ Status vocabulary still growing
 >
