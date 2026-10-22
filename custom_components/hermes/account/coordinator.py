@@ -1,8 +1,9 @@
 """Coordinator for the account inbox source."""
+
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 import logging
-from datetime import datetime, timedelta, timezone
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -58,9 +59,9 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
         self.delivered: list[dict] = []
         # None on the first update deliberately suppresses historical events.
         self._known_state: dict[str, ParcelStatus] | None = None
-        self._known_delivery_times: (
-            dict[str, tuple[str | None, str | None]] | None
-        ) = None
+        self._known_delivery_times: dict[str, tuple[str | None, str | None]] | None = (
+            None
+        )
         self._cached_device_id: str | None = None
         self._delivered_codes: set[str] = set()
         self.last_success_time: datetime | None = None
@@ -90,7 +91,9 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
         try:
             shipments = await self._client.async_get_shipments()
         except HermesAccountReauthRequired as err:
-            raise ConfigEntryAuthFailed("Hermes account needs reauthentication") from err
+            raise ConfigEntryAuthFailed(
+                "Hermes account needs reauthentication"
+            ) from err
         except HermesAccountCompatibilityError as err:
             raise UpdateFailed(
                 "Hermes refused the account request before checking the login"
@@ -130,5 +133,5 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
         self._known_state = snapshot_states(seen)
         self._known_delivery_times = snapshot_delivery_times(seen)
 
-        self.last_success_time = datetime.now(timezone.utc)
+        self.last_success_time = datetime.now(UTC)
         return active

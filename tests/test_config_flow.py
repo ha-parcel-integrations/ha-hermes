@@ -1,4 +1,5 @@
 """Tests for the Hermes config and options flow."""
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -83,7 +84,7 @@ _LOGIN = "custom_components.hermes.account.client.HermesAccountClient.async_logi
 _TOKENS = {"access_token": "access-1", "refresh_token": "refresh-1"}
 
 
-async def _submit_account(hass, username="  SomeUser ", password="pw"):
+async def _submit_account(hass, username="  SomeUser ", password="pw"):  # noqa: S107 - test credential
     result = await _pick(hass, "account")
     return await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_USERNAME: username, CONF_PASSWORD: password}
@@ -168,8 +169,9 @@ async def test_reauth_asks_only_for_the_password_and_keeps_the_entry(hass):
     assert [str(key) for key in result["data_schema"].schema] == [CONF_PASSWORD]
     assert result["description_placeholders"]["username"] == "someuser"
 
-    with patch(_LOGIN, new=AsyncMock(return_value=_TOKENS)) as login, patch(
-        "custom_components.hermes.async_setup_entry", return_value=True
+    with (
+        patch(_LOGIN, new=AsyncMock(return_value=_TOKENS)) as login,
+        patch("custom_components.hermes.async_setup_entry", return_value=True),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {CONF_PASSWORD: "new-pw"}
@@ -231,8 +233,12 @@ def _hub(parcels: list[dict]) -> MockConfigEntry:
 
 
 def _init_input(
-    *, add="", remove=None, history=False,
-    filter_type="days", amount=7,
+    *,
+    add="",
+    remove=None,
+    history=False,
+    filter_type="days",
+    amount=7,
 ) -> dict:
     """Build the sectioned options-form submission."""
     parcels: dict = {"add": add}
@@ -260,7 +266,9 @@ async def _open_options_step(hass, entry, step_id: str):
 
 async def test_options_parcel_list_can_be_cleared(hass):
     """A submitted empty list removes the final manually tracked parcel."""
-    entry = MockConfigEntry(domain=DOMAIN, options={CONF_PARCELS: [{CONF_TRACKING_CODE: "EXAMPLE111111"}]})
+    entry = MockConfigEntry(
+        domain=DOMAIN, options={CONF_PARCELS: [{CONF_TRACKING_CODE: "EXAMPLE111111"}]}
+    )
     entry.add_to_hass(hass)
     result = await _open_options_step(hass, entry, "parcels")
     result = await hass.config_entries.options.async_configure(
@@ -277,7 +285,12 @@ async def test_options_settings_preserve_parcel_list(hass):
     entry.add_to_hass(hass)
     result = await _open_options_step(hass, entry, "settings")
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_DELIVERED_FILTER_TYPE: "days", CONF_DELIVERED_FILTER_AMOUNT: 7, CONF_INCLUDE_HISTORY: False}
+        result["flow_id"],
+        {
+            CONF_DELIVERED_FILTER_TYPE: "days",
+            CONF_DELIVERED_FILTER_AMOUNT: 7,
+            CONF_INCLUDE_HISTORY: False,
+        },
     )
     assert result["type"] == "create_entry"
     assert result["data"][CONF_PARCELS] == parcels

@@ -10,6 +10,7 @@ The contract the coordinator relies on:
 * lets ``aiohttp.ClientError`` propagate untouched — ``DataUpdateCoordinator``
   already wraps those into ``UpdateFailed``.
 """
+
 from __future__ import annotations
 
 import logging

@@ -1,11 +1,10 @@
 """Tests for Hermes diagnostics."""
+
 from unittest.mock import MagicMock
 
 from custom_components.hermes.account.parcels import normalize_account_parcel
 from custom_components.hermes.const import ACCOUNT_API_KEY
-from custom_components.hermes.diagnostics import (
-    async_get_config_entry_diagnostics,
-)
+from custom_components.hermes.diagnostics import async_get_config_entry_diagnostics
 
 from .account.payloads import delivered_shipment
 

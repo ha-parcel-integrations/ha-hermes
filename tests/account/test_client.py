@@ -1,4 +1,5 @@
 """Tests for the account client: login, refresh, and the 403 branching."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
@@ -109,9 +110,7 @@ async def test_non_array_shipments_body_is_an_api_error():
 
 async def test_html_403_on_login_is_a_compatibility_failure_not_bad_credentials():
     """The gateway refuses a rejected app key before it checks the password."""
-    client, _ = _client(
-        _Response(403, text=GATEWAY_403, content_type="text/html")
-    )
+    client, _ = _client(_Response(403, text=GATEWAY_403, content_type="text/html"))
     with pytest.raises(HermesAccountCompatibilityError) as caught:
         await client.async_login("someone", "pw")
     assert not isinstance(caught.value, HermesAccountInvalidCredentials)
@@ -119,16 +118,16 @@ async def test_html_403_on_login_is_a_compatibility_failure_not_bad_credentials(
 
 
 async def test_html_body_is_enough_even_without_an_html_content_type():
-    client, _ = _client(_Response(403, text=GATEWAY_403, content_type="application/json"))
+    client, _ = _client(
+        _Response(403, text=GATEWAY_403, content_type="application/json")
+    )
     with pytest.raises(HermesAccountCompatibilityError):
         await client.async_login("someone", "pw")
 
 
 @pytest.mark.parametrize("status", [401, 403])
 async def test_json_rejection_on_login_is_bad_credentials(status):
-    client, _ = _client(
-        _Response(status, text='{"error": "bad credentials"}')
-    )
+    client, _ = _client(_Response(status, text='{"error": "bad credentials"}'))
     with pytest.raises(HermesAccountInvalidCredentials):
         await client.async_login("someone", "wrong")
 

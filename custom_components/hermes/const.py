@@ -1,4 +1,5 @@
 """Constants for the Hermes parcel tracker integration."""
+
 from enum import StrEnum
 
 from homeassistant.const import Platform
@@ -16,14 +17,14 @@ class ParcelStatus(StrEnum):
     roughly the order a parcel moves through.
     """
 
-    REGISTERED = "registered"               # Sender announced the parcel; not handed over yet
-    IN_TRANSIT = "in_transit"               # In the carrier's network
-    OUT_FOR_DELIVERY = "out_for_delivery"   # On a delivery vehicle today
-    AT_PICKUP_POINT = "at_pickup_point"     # Ready to collect at a pickup location
-    DELIVERED = "delivered"                 # Handed over
-    RETURNING = "returning"                 # Failed delivery, going back to sender
-    PROBLEM = "problem"                     # Carrier reports an exception/issue
-    UNKNOWN = "unknown"                     # Raw status we have not mapped yet
+    REGISTERED = "registered"  # Sender announced the parcel; not handed over yet
+    IN_TRANSIT = "in_transit"  # In the carrier's network
+    OUT_FOR_DELIVERY = "out_for_delivery"  # On a delivery vehicle today
+    AT_PICKUP_POINT = "at_pickup_point"  # Ready to collect at a pickup location
+    DELIVERED = "delivered"  # Handed over
+    RETURNING = "returning"  # Failed delivery, going back to sender
+    PROBLEM = "problem"  # Carrier reports an exception/issue
+    UNKNOWN = "unknown"  # Raw status we have not mapped yet
 
 
 PLATFORMS = [Platform.BUTTON, Platform.CALENDAR, Platform.SENSOR]
@@ -99,7 +100,9 @@ CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 # Einrichtungs-Service / 2-man furniture arm) is deliberately NOT used. Also a
 # separate company from Evri, the former Hermes UK — do not assume a shared
 # endpoint.
-TRACKING_API_URL = "https://api.my-deliveries.de/tnt/v2/shipments/search/{tracking_code}"
+TRACKING_API_URL = (
+    "https://api.my-deliveries.de/tnt/v2/shipments/search/{tracking_code}"
+)
 
 # Human-facing deep link on each parcel's ``url`` field. The consumer tracking
 # page is a client-side SPA, so the exact deep-link shape is UNVERIFIED (open:

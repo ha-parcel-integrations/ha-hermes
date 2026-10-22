@@ -1,4 +1,5 @@
 """Tests for Hermes setup and unload."""
+
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.config_entries import ConfigEntryState
@@ -23,8 +24,7 @@ from custom_components.hermes.const import (
 from custom_components.hermes.tracking.api import HermesApiClient, HermesApiError
 
 from .account.payloads import delivered_shipment, in_flight_shipment, thin_shipment
-from .tracking.payloads import ACTIVE_CODE
-from .tracking.payloads import active_sample as _sample
+from .tracking.payloads import ACTIVE_CODE, active_sample as _sample
 
 OTHER_CODE = "22222222222222"
 
@@ -95,7 +95,10 @@ async def test_per_parcel_sensor_spawn_and_remove(hass):
     entry.add_to_hass(hass)
 
     mock = AsyncMock(return_value=_sample())
-    with patch("custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel", new=mock):
+    with patch(
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
+        new=mock,
+    ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
@@ -131,7 +134,10 @@ async def test_options_update_applies_live_without_reload(hass):
     entry.add_to_hass(hass)
 
     mock = AsyncMock(return_value=_sample())
-    with patch("custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel", new=mock):
+    with patch(
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
+        new=mock,
+    ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
@@ -220,9 +226,7 @@ async def test_rejected_account_tokens_at_setup_start_reauth(hass):
 
 async def test_rejected_account_tokens_while_running_start_reauth(hass):
     entry = _account_entry(hass)
-    with patch(
-        _ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])
-    ):
+    with patch(_ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     assert _reauth_flows(hass) == []
@@ -250,9 +254,7 @@ async def test_rejected_app_key_never_starts_reauth(hass):
 
 async def test_rotated_account_tokens_are_persisted_on_the_entry(hass):
     entry = _account_entry(hass)
-    with patch(
-        _ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])
-    ):
+    with patch(_ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     await entry.runtime_data.client._token_callback(
@@ -273,11 +275,12 @@ async def test_tracking_and_account_entries_run_side_by_side(hass):
     )
     tracking.add_to_hass(hass)
     account = _account_entry(hass)
-    with patch(
-        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
-        new=AsyncMock(return_value=_sample()),
-    ), patch(
-        _ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])
+    with (
+        patch(
+            "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
+            new=AsyncMock(return_value=_sample()),
+        ),
+        patch(_ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])),
     ):
         # Setting up the first entry of a domain sets up all of them.
         assert await hass.config_entries.async_setup(tracking.entry_id)
@@ -317,9 +320,7 @@ async def test_entry_without_a_source_key_is_a_tracking_hub(hass):
 
 async def test_account_coordinator_resolves_and_caches_its_device_id(hass):
     entry = _account_entry(hass)
-    with patch(
-        _ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])
-    ):
+    with patch(_ACCOUNT_CLIENT + "async_get_shipments", new=AsyncMock(return_value=[])):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     coordinator = entry.runtime_data.coordinator

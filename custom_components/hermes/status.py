@@ -5,6 +5,7 @@ a German one — both under the field name ``parcelStatus``. They are different
 vocabularies, so each source has its own map and neither may reach for the
 other's. Do not merge them.
 """
+
 from __future__ import annotations
 
 from .const import ParcelStatus

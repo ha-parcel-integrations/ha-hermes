@@ -5,6 +5,7 @@ The account route shapes its own payload: the status vocabulary is German
 ``IN_UNKNOWN`` element carries no ``status`` block at all. Fields the response
 does not carry stay ``None`` — never guessed.
 """
+
 from __future__ import annotations
 
 import logging
@@ -56,9 +57,15 @@ def _pickup_point(address: dict[str, Any]) -> str | None:
     if address.get("addressType") != "PARCELSHOP":
         return None
     locality = " ".join(
-        part for part in (_text(address.get("zipCode")), _text(address.get("city"))) if part
+        part
+        for part in (_text(address.get("zipCode")), _text(address.get("city")))
+        if part
     )
-    parts = [_text(address.get("lastName")), _text(address.get("street")), locality or None]
+    parts = [
+        _text(address.get("lastName")),
+        _text(address.get("street")),
+        locality or None,
+    ]
     return ", ".join(part for part in parts if part) or None
 
 

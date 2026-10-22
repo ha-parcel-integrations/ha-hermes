@@ -1,4 +1,5 @@
 """Tests for the Hermes refresh button."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 from custom_components.hermes.button import HermesRefreshButton

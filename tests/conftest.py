@@ -1,14 +1,17 @@
 """pytest configuration for the Hermes test suite."""
+
 import sys
 
 import pytest
 from pytest_homeassistant_custom_component.plugins import hass  # noqa: F401
 
+from custom_components.hermes.account import parcels as account_parcels
+from custom_components.hermes.tracking import parcels
+
 
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Make ``custom_components.hermes`` loadable from config-flow / setup tests."""
-    yield
 
 
 @pytest.fixture(autouse=True)
@@ -20,13 +23,9 @@ def reset_one_shot_warnings():
     makes them leak across tests, so whether a warning fires would otherwise
     depend on test order.
     """
-    from custom_components.hermes.account import parcels as account_parcels
-    from custom_components.hermes.tracking import parcels
-
     parcels._unmapped_statuses_logged.clear()
     parcels._payload_shape_logged = False
     account_parcels._unmapped_statuses_logged.clear()
-    yield
 
 
 if sys.platform == "win32":
@@ -46,7 +45,7 @@ if sys.platform == "win32":
     # HA's aiohttp helper hardcodes aiohttp's AsyncResolver, whose aiodns
     # backend refuses the Proactor loop the suite runs on under Windows.
     # Swap in the threaded resolver for the tests — no test resolves DNS.
-    import homeassistant.helpers.aiohttp_client as _ha_aiohttp_client
     from aiohttp.resolver import ThreadedResolver
+    import homeassistant.helpers.aiohttp_client as _ha_aiohttp_client
 
     _ha_aiohttp_client.AsyncResolver = ThreadedResolver

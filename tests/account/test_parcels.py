@@ -1,15 +1,13 @@
 """Tests for normalising Hermes account shipments."""
+
 import logging
 
 from custom_components.hermes.account import parcels as account_parcels
 from custom_components.hermes.account.parcels import normalize_account_parcel
 from custom_components.hermes.const import ParcelStatus
-from custom_components.hermes.status import (
-    ACCOUNT_STATUS_MAP,
-    TRACKING_STATUS_MAP,
-)
+from custom_components.hermes.status import ACCOUNT_STATUS_MAP, TRACKING_STATUS_MAP
+from tests.tracking.test_parcels import CANONICAL_KEYS
 
-from ..tracking.test_parcels import CANONICAL_KEYS
 from .payloads import (
     BARCODE,
     THIN_BARCODE,
@@ -51,7 +49,9 @@ def test_thin_in_unknown_element_normalises_to_unknown_without_raising():
     assert parcel["delivered_at"] is None
     assert parcel["receiver"] is None
     assert parcel["history"] is None
-    assert normalize_account_parcel(thin_shipment(), include_history=True)["history"] == []
+    assert (
+        normalize_account_parcel(thin_shipment(), include_history=True)["history"] == []
+    )
 
 
 def test_thin_element_does_not_warn_about_an_unmapped_status(caplog):
@@ -196,7 +196,9 @@ def test_pickup_point_is_built_from_a_parcelshop_address():
         "country": "DEU",
     }
     parcel = normalize_account_parcel(shipment)
-    assert parcel["pickup_point"] == "Photo Porst, Rathausallee 16, 53757 Sankt Augustin"
+    assert (
+        parcel["pickup_point"] == "Photo Porst, Rathausallee 16, 53757 Sankt Augustin"
+    )
 
 
 def test_a_home_delivery_has_no_pickup_point():

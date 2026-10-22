@@ -1,14 +1,12 @@
 """Tests for the Hermes API client."""
+
 import json
 from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
 import pytest
 
-from custom_components.hermes.tracking.api import (
-    HermesApiClient,
-    HermesApiError,
-)
+from custom_components.hermes.tracking.api import HermesApiClient, HermesApiError
 
 CODE = "12345678901234"
 
@@ -30,7 +28,10 @@ def _session_returning(status: int, body: object = None) -> MagicMock:
 
 async def test_get_parcel_returns_first_array_element_on_success():
     """HTTP 200 is a JSON array; element 0 is the parcel."""
-    parcel0 = {"barcode": CODE, "parcelProgress": [{"parcelStatus": "DELIVERED_HOMEDELIVERY"}]}
+    parcel0 = {
+        "barcode": CODE,
+        "parcelProgress": [{"parcelStatus": "DELIVERED_HOMEDELIVERY"}],
+    }
     session = _session_returning(200, [parcel0, {"barcode": "other"}])
     client = HermesApiClient(session)
 

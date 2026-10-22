@@ -1,10 +1,11 @@
 """Tests for account inbox polling."""
+
 from datetime import timedelta
 from unittest.mock import AsyncMock
 
-import pytest
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hermes.account.client import (
@@ -126,7 +127,9 @@ async def test_first_refresh_is_silent_then_changes_fire_suite_events(hass):
     await hass.async_block_till_done()
     assert [e.data["barcode"] for e in fired["registered"]] == ["NEW"]
     assert fired["status_changed"][0].data["old_status"] == ParcelStatus.IN_TRANSIT
-    assert fired["status_changed"][0].data["new_status"] == ParcelStatus.OUT_FOR_DELIVERY
+    assert (
+        fired["status_changed"][0].data["new_status"] == ParcelStatus.OUT_FOR_DELIVERY
+    )
 
     # The original in-flight parcel is gone and a delivered one appears: a
     # barcode first seen already delivered fires nothing.

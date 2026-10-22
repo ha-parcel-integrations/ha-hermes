@@ -4,19 +4,16 @@ Isolated from the keyless tracking client: it uses a user-owned token pair and
 transport values from ``const.py``. Responses come back as raw dictionaries;
 normalisation belongs in ``parcels.py``.
 """
+
 from __future__ import annotations
 
-import logging
 from collections.abc import Awaitable, Callable
+import logging
 from typing import Any
 
 import aiohttp
 
-from ..const import (
-    ACCOUNT_API_KEY,
-    ACCOUNT_API_URL,
-    ACCOUNT_APP_VERSION,
-)
+from ..const import ACCOUNT_API_KEY, ACCOUNT_API_URL, ACCOUNT_APP_VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
