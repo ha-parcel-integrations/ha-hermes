@@ -36,10 +36,13 @@ class HermesData:
 
 
 type HermesConfigEntry = ConfigEntry[HermesData]
+HermesAnyCoordinator = HermesCoordinator | HermesAccountCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HermesConfigEntry) -> bool:
     """Set up Hermes from a config entry."""
+    client: HermesApiClient | HermesAccountClient
+    coordinator: HermesCoordinator | HermesAccountCoordinator
     is_account = entry.data.get(CONF_SOURCE, SOURCE_TRACKING) == SOURCE_ACCOUNT
     if is_account:
 

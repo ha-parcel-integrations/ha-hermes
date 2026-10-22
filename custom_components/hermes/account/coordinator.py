@@ -44,6 +44,8 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
     is nothing to skip and polling never suspends.
     """
 
+    config_entry: ConfigEntry
+
     def __init__(
         self, hass: HomeAssistant, client: HermesAccountClient, entry: ConfigEntry
     ) -> None:

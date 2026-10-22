@@ -18,10 +18,9 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import HermesConfigEntry
+from . import HermesAnyCoordinator, HermesConfigEntry
 from .const import DOMAIN, ParcelStatus
 from .device import ATTRIBUTION, build_device_info
-from .tracking.coordinator import HermesCoordinator
 from .tracking.parcels import parse_iso
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,7 +83,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class HermesAwaitingPickupSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
+class HermesAwaitingPickupSensor(CoordinatorEntity[HermesAnyCoordinator], SensorEntity):
     """Parcels that have arrived at a pickup point and are ready to collect."""
 
     _attr_has_entity_name = True
@@ -93,7 +92,7 @@ class HermesAwaitingPickupSensor(CoordinatorEntity[HermesCoordinator], SensorEnt
     _attr_attribution = ATTRIBUTION
     _unrecorded_attributes = frozenset({"parcels"})
 
-    def __init__(self, coordinator: HermesCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: HermesAnyCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_awaiting_pickup"
@@ -117,7 +116,9 @@ class HermesAwaitingPickupSensor(CoordinatorEntity[HermesCoordinator], SensorEnt
         return {"parcels": self._parcels()}
 
 
-class HermesIncomingParcelsSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
+class HermesIncomingParcelsSensor(
+    CoordinatorEntity[HermesAnyCoordinator], SensorEntity
+):
     """Summary sensor: count of active (not-yet-delivered) tracked parcels.
 
     Spawns a per-parcel sensor for each new barcode and removes stale ones
@@ -133,7 +134,7 @@ class HermesIncomingParcelsSensor(CoordinatorEntity[HermesCoordinator], SensorEn
 
     def __init__(
         self,
-        coordinator: HermesCoordinator,
+        coordinator: HermesAnyCoordinator,
         entry: ConfigEntry,
         async_add_entities: AddEntitiesCallback,
         known_barcodes: set[str] | None = None,
@@ -182,7 +183,7 @@ class HermesIncomingParcelsSensor(CoordinatorEntity[HermesCoordinator], SensorEn
         super()._handle_coordinator_update()
 
 
-class HermesParcelSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
+class HermesParcelSensor(CoordinatorEntity[HermesAnyCoordinator], SensorEntity):
     """Per-parcel sensor reporting the status of one tracked Hermes parcel."""
 
     _attr_has_entity_name = True
@@ -191,7 +192,7 @@ class HermesParcelSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
     _unrecorded_attributes = frozenset({"raw", "history"})
 
     def __init__(
-        self, coordinator: HermesCoordinator, entry: ConfigEntry, barcode: str
+        self, coordinator: HermesAnyCoordinator, entry: ConfigEntry, barcode: str
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -220,7 +221,7 @@ class HermesParcelSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
         return dict(parcel) if parcel else {}
 
 
-class HermesNextDeliverySensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
+class HermesNextDeliverySensor(CoordinatorEntity[HermesAnyCoordinator], SensorEntity):
     """Earliest expected delivery datetime across all active parcels."""
 
     _attr_has_entity_name = True
@@ -228,7 +229,7 @@ class HermesNextDeliverySensor(CoordinatorEntity[HermesCoordinator], SensorEntit
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_attribution = ATTRIBUTION
 
-    def __init__(self, coordinator: HermesCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: HermesAnyCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_next_delivery"
@@ -267,7 +268,9 @@ class HermesNextDeliverySensor(CoordinatorEntity[HermesCoordinator], SensorEntit
         }
 
 
-class HermesDeliveredParcelsSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
+class HermesDeliveredParcelsSensor(
+    CoordinatorEntity[HermesAnyCoordinator], SensorEntity
+):
     """Recently delivered tracked Hermes parcels."""
 
     _attr_has_entity_name = True
@@ -276,7 +279,7 @@ class HermesDeliveredParcelsSensor(CoordinatorEntity[HermesCoordinator], SensorE
     _attr_attribution = ATTRIBUTION
     _unrecorded_attributes = frozenset({"parcels"})
 
-    def __init__(self, coordinator: HermesCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: HermesAnyCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_delivered_parcels"
@@ -293,7 +296,7 @@ class HermesDeliveredParcelsSensor(CoordinatorEntity[HermesCoordinator], SensorE
         return {"parcels": self.coordinator.delivered}
 
 
-class HermesLastUpdateSensor(CoordinatorEntity[HermesCoordinator], SensorEntity):
+class HermesLastUpdateSensor(CoordinatorEntity[HermesAnyCoordinator], SensorEntity):
     """Diagnostic sensor reporting when Hermes was last polled successfully."""
 
     _attr_has_entity_name = True
@@ -302,7 +305,7 @@ class HermesLastUpdateSensor(CoordinatorEntity[HermesCoordinator], SensorEntity)
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_attribution = ATTRIBUTION
 
-    def __init__(self, coordinator: HermesCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: HermesAnyCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_last_update"
