@@ -22,11 +22,10 @@ NEW_ISSUE_URL = (
 )
 
 # Keyless route: Hermes ``parcelStatus`` (the stable English enum on each ``parcelProgress``
-# event) → canonical ParcelStatus. Seeded from the values mapped in
-# ``itsvic-dev/deliveries`` (HermesDeliveryService.kt) plus the pickup family
-# from the app decompile, extended 2026-10-10 with the codes
-# ``plhery/universal-parcel-scraper`` (``carriers/hermes-de/``) read off the
-# public recipient bundle; extend it as real parcels surface more. An unmapped
+# event) → canonical ParcelStatus. Seeded from the values a third-party client
+# maps, plus the pickup family from the app decompile, extended 2026-10-10 with
+# the codes another client reads off the public recipient bundle; extend it as
+# real parcels surface more. An unmapped
 # value surfaces as ``unknown`` plus a one-shot warning that asks the user to
 # report it — do not map the localised ``status`` / ``historyText`` here, only
 # the stable ``parcelStatus`` code.

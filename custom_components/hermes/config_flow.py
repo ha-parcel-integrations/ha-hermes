@@ -97,9 +97,9 @@ class HermesConfigFlow(ConfigFlow, domain=DOMAIN):
         counts as configured.
 
         Code-only: the Paket T&T endpoint needs the tracking number alone (no
-        postcode — the ``itsvic-dev/deliveries`` client sets
-        ``requiresPostCode = false``, and the optional ``X-ZipCode`` header is
-        only for guest disambiguation). So there is nothing to ask at setup.
+        postcode — a third-party client sets ``requiresPostCode = false``, and
+        the optional ``X-ZipCode`` header is only for guest disambiguation). So
+        there is nothing to ask at setup.
         """
         await self.async_set_unique_id(DOMAIN)
         self._abort_if_unique_id_configured()

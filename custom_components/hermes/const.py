@@ -65,8 +65,7 @@ CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 
 # Hermes Germany's consumer **Paket** track-and-trace endpoint. This is the same
 # API the myhermes.de tracking widget (`tnt-bundle-v2.js`) calls, cross-checked
-# against two other clients — `itsvic-dev/deliveries` (Android, MIT) and
-# `dbalan/hermes` (HA).
+# against two independent third-party clients.
 #
 # * **Keyless, code-based.** No API key, no Bearer, no auth header — the parcel
 #   number alone (the Dragonfly model). Probed 2026-07-23 with no key and no
