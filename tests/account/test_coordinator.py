@@ -152,3 +152,29 @@ async def test_hop_to_delivered_fires_only_the_delivered_event(hass):
 
     assert [event.data["barcode"] for event in delivered] == [BARCODE]
     assert changed == []
+
+
+async def test_a_parcel_the_delivered_list_leaves_out_still_fires_delivered(hass):
+    """The retention option limits the delivered sensor, never the events."""
+    coordinator, _ = _coordinator(
+        hass,
+        [
+            [in_flight_shipment(barcode=BARCODE), in_flight_shipment()],
+            [
+                delivered_shipment(),
+                {**delivered_shipment(), "barcode": IN_FLIGHT_BARCODE},
+            ],
+        ],
+        **{CONF_DELIVERED_FILTER_AMOUNT: 1},
+    )
+    delivered = []
+    hass.bus.async_listen(f"{DOMAIN}_parcel_delivered", delivered.append)
+
+    await coordinator._async_update_data()
+    await coordinator._async_update_data()
+    await hass.async_block_till_done()
+
+    assert sorted(event.data["barcode"] for event in delivered) == sorted(
+        [BARCODE, IN_FLIGHT_BARCODE]
+    )
+    assert len(coordinator.delivered) == 1

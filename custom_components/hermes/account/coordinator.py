@@ -113,18 +113,18 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
         active = sort_parcels_by_ts(
             [parcel for parcel in parcels if not parcel["delivered"]], "planned_from"
         )
-        self.delivered = apply_delivered_filter(
-            sort_parcels_by_ts(
-                [parcel for parcel in parcels if parcel["delivered"]],
-                "delivered_at",
-                descending=True,
-            ),
-            self.config_entry,
+        delivered_sorted = sort_parcels_by_ts(
+            [parcel for parcel in parcels if parcel["delivered"]],
+            "delivered_at",
+            descending=True,
         )
+        self.delivered = apply_delivered_filter(delivered_sorted, self.config_entry)
 
         # Active + delivered, combined so the transition to delivered is
         # visible in one set — same shape the tracking coordinator diffs.
-        seen = active + self.delivered
+        # Events and remembered state cover every parcel; the retention option
+        # only limits what the delivered sensor shows.
+        seen = active + delivered_sorted
         fire_incoming_change_events(
             self.hass,
             seen,
