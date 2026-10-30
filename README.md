@@ -148,7 +148,9 @@ Standard HA removal applies: **Settings → Devices & Services → Hermes → �
 | `sensor.hermes_incoming_parcels` | Number of active tracked parcels, full list under the `parcels` attribute |
 | `sensor.hermes_parcel_<code>` | One per tracked parcel; state is the canonical status, attributes carry the full normalised parcel |
 | `sensor.hermes_next_delivery` | Earliest expected delivery moment across all active parcels |
+| `sensor.hermes_awaiting_pickup` | Incoming parcels that are ready to collect at a pickup point |
 | `sensor.hermes_delivered_parcels` | Recently delivered parcels (see the retention option) |
+| `calendar.hermes_deliveries` | Read-only calendar of expected deliveries, no extra API calls |
 | `sensor.hermes_last_successful_update` | Diagnostic: when Hermes was last polled successfully |
 
 Entities of an account entry are named after the account, e.g. `sensor.hermes_<username>_incoming_parcels`.
@@ -222,7 +224,7 @@ logger:
 - **A parcel shows `unknown`** — Hermes has not scanned it yet (their API answers `404` until the first scan), or the number is wrong. It will pick up automatically once scanned.
 - **Account: "Hermes refused this request"** — the Hermes gateway rejected the request before it checked your login, so signing in again will not help. The cause is not knowable from the response alone (a rotated app key, a network/region block and a transient refusal all look identical), so enable [debug logging](#debugging) and [open an issue](https://github.com/ha-parcel-integrations/ha-hermes/issues/new) with the logged gateway response if it persists.
 - **Account: a parcel shows `unknown` with no details** — Hermes lists some old parcels without any status information.
-- **A status logs "Unrecognised Hermes status" or "Unrecognised Hermes account status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-hermes/issues/new) with the logged line so the mapping can be extended.
+- **A status logs "Unrecognised Hermes status" or "Unrecognised Hermes account status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-hermes/issues/new?template=unrecognised_status.yml) with the logged line so the mapping can be extended.
 
 ## Related integrations
 
