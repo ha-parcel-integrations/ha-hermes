@@ -20,6 +20,18 @@ body:
       render: text
     validations:
       required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Which Hermes setup logged it?
+      description: The source you picked during setup, shown on the integration's entry under Settings → Devices & services → Hermes.
+      options:
+        - Account (automatic import)
+        - Tracking codes
+        - Not sure
+    validations:
+      required: true
+
   - type: input
     id: version
     attributes:
