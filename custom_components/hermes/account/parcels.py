@@ -88,7 +88,9 @@ def _build_history(events: Any) -> list[dict]:
         entry = {
             "timestamp": timestamp,
             "status": ACCOUNT_STATUS_MAP.get(code) if isinstance(code, str) else None,
-            "raw_status": event.get("statusHistoryShortText") or code,
+            "raw_status": event.get("statusHistoryText")
+            or event.get("statusHistoryShortText")
+            or code,
         }
         parsed = parse_iso(timestamp)
         if parsed is None:

@@ -101,10 +101,17 @@ def test_history_is_oldest_first_and_maps_each_event():
     assert history[0] == {
         "timestamp": "2026-09-14T01:34:39.176Z",
         "status": ParcelStatus.REGISTERED,
-        "raw_status": "Sendung angekündigt",
+        "raw_status": "Die Sendung wurde angekündigt",
     }
     assert history[-1]["status"] == ParcelStatus.DELIVERED
     assert len(history) == 7
+
+
+def test_history_falls_back_to_the_short_text():
+    shipment = delivered_shipment()
+    del shipment["parcelHistory"][0]["statusHistoryText"]
+    history = normalize_account_parcel(shipment, include_history=True)["history"]
+    assert history[0]["raw_status"] == "Sendung angekündigt"
 
 
 def test_history_is_sorted_even_when_the_api_order_changes():
