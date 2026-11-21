@@ -55,7 +55,8 @@ different niche service — do not "fix" the integration to use it.
   `weight`, `dimensions` stay `None`. `planned_from`/`planned_to` come from the
   payload's `forecast` block — `deliveryTimeFromUTC`/`deliveryTimeToUTC` is the
   real window the tracking widget renders, and `pickupReadyFromUTC` is a point
-  estimate for a parcel waiting in a shop, so it fills `planned_from` alone.
+  estimate for a parcel on its way to a shop, so it fills `planned_from` alone
+  (and, like every window, is emptied once the parcel is at the shop).
   `staticForecast` is ignored on purpose: it is a bucket
   (`PARCELSHOP_1_2_DAYS`), not a timestamp. **No real parcel has been seen with
   a populated `forecast` yet** — the field names come from the carrier's own
@@ -84,15 +85,15 @@ different niche service — do not "fix" the integration to use it.
   `ConfigEntryAuthFailed` itself.
   `sender` is `atg.companyName` — **ATG is the Auftraggeber, the shipper**, not
   the delivering partner (four real parcels named Flaconi, QVC, Deutsche Telekom
-  and "Privatversand"). `pickup_point` is built from `address` **only when
+  and "Privatversand"). `pickup_point` is the shop name (`address.lastName`, no street or town) **only when
   `addressType == "PARCELSHOP"`** — that one block describes whatever the
   destination is, so reading it unconditionally would publish the receiver's own
   name as a pickup point. `planned_from`/`planned_to`, `weight`, `dimensions`
   stay `None`: `bookedEdl.deliveryDate` is a *requested* day (two days off on a
   real parcel), not a forecast. `delivered` is `metaInformation.delivered`, never
-  inferred from the status — but it is **suppressed while the status is
-  `at_pickup_point`**, so a parcel on a shop counter is never announced as
-  delivered. A thin `IN_UNKNOWN` element has no `status` block and must
+  inferred from the status. The flag decides the status, shop parcels included (it is folded in; `delivered` is then
+  `status is DELIVERED`), and an explicit `false` keeps a mapped `delivered`
+  status at `in_transit`. A thin `IN_UNKNOWN` element has no `status` block and must
   normalise to `unknown`.
 - **Two status maps, never merged** — `TRACKING_STATUS_MAP` (English) and
   `ACCOUNT_STATUS_MAP` (German) in `status.py`, both under the field name
@@ -130,3 +131,24 @@ Coverage must stay **above 95%** (silver `test-coverage` rule). Run before
 committing. A code change updates the README + this file in the same commit;
 the API reference now lives in the private `carrier-research/hermes/api/`,
 not in this repo.
+
+## Parcel contract: window, pickup, delivered
+
+- `tracking/parcels.py` holds the shared helpers (`planned_window`,
+  `planned_for_status`, `is_pickup`); the account source imports them. The
+  forecast is read in `Europe/Berlin`: a lone moment runs to 23:59:59 of that day.
+- `parcelAttributes.delivered` (tracking) and `metaInformation.delivered`
+  (account) are folded into the status, so a terminal code that is not mapped
+  yet still ends the parcel (ha-hermes#1), and it wins over `at_pickup_point`
+  (a collected parcel is delivered); no captured parcel showed the flag firing
+  on drop-off at the shop, so it is not suppressed there. A return stays `returning` whatever
+  the flag says; only `RETURN_DELIVERED_TO_SENDER` (tracking) and
+  `RETOURE_AUSGELIEFERT_BEIM_ATG` (account) make it finished (`delivered: true`),
+  which fires no `_delivered` event.
+- `pickup` is `addressType == PARCELSHOP` (account) or any status/history entry
+  that reached `at_pickup_point`, so it stays true once collected.
+- Both sources expose `awaiting_pickup` and `en_route_to_pickup_point` (`pickup`
+  parcels not yet at the point, returns excluded). The latter is pending: no
+  real parcel has been seen on its way to a shop yet, so it reads 0 until then.
+- `next_delivery` skips a parcel whose window has ended; the calendar shows a
+  whole-day window as an all-day event.

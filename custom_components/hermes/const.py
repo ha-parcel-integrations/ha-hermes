@@ -57,6 +57,10 @@ CAPABILITIES_BY_VARIANT = {
 # account route `bookedEdl.deliveryDate` is a requested day, not a forecast.
 # Claiming the capability while populating neither field is the misreport this
 # split exists to prevent.
+#
+# Neither source has shown a parcel routed to a pickup point that was still on
+# its way (tracking) or a PaketShop parcel before arrival (account), so the
+# `en_route_to_pickup_point` sensor reads 0 until one does.
 PENDING_CAPABILITIES_BY_VARIANT = {
     "Tracking": frozenset({"delivery_window"}),
     "Account": frozenset({"delivery_window"}),

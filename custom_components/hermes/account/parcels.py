@@ -13,7 +13,7 @@ from typing import Any
 
 from ..const import HISTORY_MAX_EVENTS, ParcelStatus
 from ..status import ACCOUNT_STATUS_MAP, NEW_ISSUE_URL
-from ..tracking.parcels import parse_iso, to_iso_timestamp, tracking_url
+from ..tracking.parcels import is_pickup, parse_iso, to_iso_timestamp, tracking_url
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,9 +35,23 @@ def _warn_unmapped_status(code: str) -> None:
     )
 
 
+_BACK_AT_SENDER = frozenset(
+    {
+        "RETOURE_AUSGELIEFERT_BEIM_ATG",
+        "RETOURE_AUSGELIEFERT_BEIM_ATG_NACH_SCHADEN",
+    }
+)
+
+
 def _dict(value: Any) -> dict[str, Any]:
     """Return ``value`` when it is a dict, else an empty one."""
     return value if isinstance(value, dict) else {}
+
+
+def _dict_list(value: Any) -> list[dict]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
 
 
 def _text(value: Any) -> str | None:
@@ -56,17 +70,7 @@ def _pickup_point(address: dict[str, Any]) -> str | None:
     """
     if address.get("addressType") != "PARCELSHOP":
         return None
-    locality = " ".join(
-        part
-        for part in (_text(address.get("zipCode")), _text(address.get("city")))
-        if part
-    )
-    parts = [
-        _text(address.get("lastName")),
-        _text(address.get("street")),
-        locality or None,
-    ]
-    return ", ".join(part for part in parts if part) or None
+    return _text(address.get("lastName"))
 
 
 def _build_history(events: Any) -> list[dict]:
@@ -130,19 +134,28 @@ def normalize_account_parcel(raw: dict, *, include_history: bool = False) -> dic
         status = ParcelStatus.UNKNOWN
         _warn_unmapped_status(code)
 
-    # Hermes' own boolean, never inferred from the status — except that a parcel
-    # waiting on a shop counter is not delivered to you, whatever the flag says.
-    # Without this guard a shop handover could publish `delivered` together with
-    # `at_pickup_point`, which contradicts itself and would retire the parcel
-    # into the delivered list while it still needs collecting. Unconfirmed: no
-    # captured parcel was *currently* at a shop, so the flag's value there is
-    # not known.
-    delivered = (
-        _dict(raw.get("metaInformation")).get("delivered") is True
-        and status is not ParcelStatus.AT_PICKUP_POINT
+    # Hermes' own boolean, never inferred from the status; it wins over a shop
+    # status because a collected parcel is delivered.
+    mapped_status = status
+    flag = _dict(raw.get("metaInformation")).get("delivered")
+    if flag is True and status is not ParcelStatus.RETURNING:
+        status = ParcelStatus.DELIVERED
+    elif flag is False and status is ParcelStatus.DELIVERED:
+        status = ParcelStatus.IN_TRANSIT
+    # A return delivered back to the sender is finished but stays ``returning``.
+    delivered = status is ParcelStatus.DELIVERED or (
+        status is ParcelStatus.RETURNING and code in _BACK_AT_SENDER
     )
     address = _dict(raw.get("address"))
     first_name = address.get("firstName")
+    pickup = is_pickup(
+        address.get("addressType") == "PARCELSHOP",
+        mapped_status,
+        (
+            ACCOUNT_STATUS_MAP.get(event.get("status") or "")
+            for event in _dict_list(raw.get("parcelHistory"))
+        ),
+    )
 
     return {
         "carrier": "Hermes",
@@ -157,8 +170,8 @@ def normalize_account_parcel(raw: dict, *, include_history: bool = False) -> dic
         ),
         "planned_from": None,
         "planned_to": None,
-        "pickup": status is ParcelStatus.AT_PICKUP_POINT,
-        "pickup_point": _pickup_point(address),
+        "pickup": pickup,
+        "pickup_point": _pickup_point(address) if pickup else None,
         "url": tracking_url(barcode),
         "weight": None,
         "dimensions": None,

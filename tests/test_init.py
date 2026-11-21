@@ -124,6 +124,37 @@ async def test_per_parcel_sensor_spawn_and_remove(hass):
         )
 
 
+async def test_setup_registers_pickup_sensors_and_keeps_them_on_restart(hass):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=DOMAIN,
+        options={CONF_PARCELS: [{CONF_TRACKING_CODE: ACTIVE_CODE}]},
+    )
+    entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    for suffix in ("awaiting_pickup", "en_route_to_pickup_point"):
+        registry.async_get_or_create(
+            "sensor",
+            DOMAIN,
+            f"{entry.entry_id}_{suffix}",
+            config_entry=entry,
+        )
+
+    with patch(
+        "custom_components.hermes.tracking.api.HermesApiClient.async_get_parcel",
+        new=AsyncMock(return_value=_sample()),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    for suffix in ("awaiting_pickup", "en_route_to_pickup_point"):
+        entity_id = registry.async_get_entity_id(
+            "sensor", DOMAIN, f"{entry.entry_id}_{suffix}"
+        )
+        assert entity_id
+        assert hass.states.get(entity_id) is not None
+
+
 async def test_options_update_applies_live_without_reload(hass):
     """Adding a parcel via options refreshes the coordinator immediately."""
     entry = MockConfigEntry(

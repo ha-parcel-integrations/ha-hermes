@@ -338,11 +338,21 @@ def test_normalize_reads_the_forecast_window():
 
 def test_normalize_pickup_ready_is_a_point_estimate():
     """A parcel waiting in a shop gets a ready-from moment, not a window."""
-    raw = pickup_sample()
+    raw = active_sample()
     raw["forecast"] = {"pickupReadyFromUTC": "2026-07-30T09:00:00Z"}
     parcel = normalize_parcel(raw)
 
     assert parcel["planned_from"] == "2026-07-30T09:00:00Z"
+    assert parcel["planned_to"] == "2026-07-30T23:59:59+02:00"
+
+
+def test_a_parcel_waiting_in_the_shop_has_no_estimate_left():
+    raw = pickup_sample()
+    raw["forecast"] = {"pickupReadyFromUTC": "2026-07-30T09:00:00Z"}
+    parcel = normalize_parcel(raw)
+
+    assert parcel["status"] == ParcelStatus.AT_PICKUP_POINT
+    assert parcel["planned_from"] is None
     assert parcel["planned_to"] is None
 
 
@@ -373,6 +383,14 @@ def test_normalize_uses_sender_company_name_when_present():
     raw["atg"] = {"companyName": "Example Merchant"}
 
     assert normalize_parcel(raw)["sender"] == "Example Merchant"
+
+
+def test_the_delivered_flag_outranks_a_shop_status():
+    raw = pickup_sample()
+    raw["parcelAttributes"] = {"delivered": True}
+    parcel = normalize_parcel(raw)
+    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["pickup"] is True
 
 
 def test_normalize_pickup_parcel():
@@ -452,7 +470,7 @@ def test_normalize_parcel_attributes_rescue_delivered_for_an_unmapped_status():
         ],
     }
     parcel = normalize_parcel(raw)
-    assert parcel["status"] == ParcelStatus.UNKNOWN
+    assert parcel["status"] == ParcelStatus.DELIVERED
     assert parcel["delivered"] is True
     assert parcel["delivered_at"] == "2026-08-10T08:16:21.025Z"
 

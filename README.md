@@ -148,6 +148,7 @@ Standard HA removal applies: **Settings → Devices & Services → Hermes → �
 | `sensor.hermes_incoming_parcels` | Number of active tracked parcels, full list under the `parcels` attribute |
 | `sensor.hermes_parcel_<code>` | One per tracked parcel; state is the canonical status, attributes carry the full normalised parcel |
 | `sensor.hermes_next_delivery` | Earliest expected delivery moment across all active parcels |
+| `sensor.hermes_en_route_to_pickup_point` | Incoming parcels routed to a pickup point that have not arrived there yet |
 | `sensor.hermes_awaiting_pickup` | Incoming parcels that are ready to collect at a pickup point |
 | `sensor.hermes_delivered_parcels` | Recently delivered parcels (see the retention option) |
 | `calendar.hermes_deliveries` | Read-only calendar of expected deliveries, no extra API calls |

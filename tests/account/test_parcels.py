@@ -82,13 +82,15 @@ def test_delivered_flag_is_not_inferred_from_the_status():
     shipment = delivered_shipment()
     shipment["metaInformation"]["delivered"] = False
     parcel = normalize_account_parcel(shipment)
-    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["status"] == ParcelStatus.IN_TRANSIT
     assert parcel["delivered"] is False
     assert parcel["delivered_at"] is None
 
     shipment = in_flight_shipment()
     shipment["metaInformation"]["delivered"] = True
-    assert normalize_account_parcel(shipment)["delivered"] is True
+    parcel = normalize_account_parcel(shipment)
+    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["delivered"] is True
 
 
 def test_history_is_oldest_first_and_maps_each_event():
@@ -192,7 +194,7 @@ def test_sender_is_none_when_hermes_names_no_company():
     assert normalize_account_parcel(shipment)["sender"] is None
 
 
-def test_pickup_point_is_built_from_a_parcelshop_address():
+def test_pickup_point_is_the_shop_name_without_its_address():
     shipment = delivered_shipment()
     shipment["address"] = {
         "addressType": "PARCELSHOP",
@@ -203,9 +205,7 @@ def test_pickup_point_is_built_from_a_parcelshop_address():
         "country": "DEU",
     }
     parcel = normalize_account_parcel(shipment)
-    assert (
-        parcel["pickup_point"] == "Photo Porst, Rathausallee 16, 53757 Sankt Augustin"
-    )
+    assert parcel["pickup_point"] == "Photo Porst"
 
 
 def test_a_home_delivery_has_no_pickup_point():
@@ -279,15 +279,14 @@ def test_a_prefixed_delivered_status_seen_live_is_mapped():
     assert ACCOUNT_STATUS_MAP["INT_ZUGESTELLT_ABLAGEORT"] is ParcelStatus.DELIVERED
 
 
-def test_a_parcel_waiting_at_a_shop_is_not_reported_delivered():
-    """Hermes' delivered flag must not outrank an awaiting-pickup status."""
+def test_the_delivered_flag_outranks_a_shop_status():
+    """An explicit delivered flag means collected."""
     shipment = delivered_shipment()
     shipment["status"]["parcelStatus"] = "ZUGESTELLT_PAKETSHOP"
     shipment["metaInformation"]["delivered"] = True
     parcel = normalize_account_parcel(shipment)
-    assert parcel["status"] is ParcelStatus.AT_PICKUP_POINT
-    assert parcel["delivered"] is False
-    assert parcel["delivered_at"] is None
+    assert parcel["status"] is ParcelStatus.DELIVERED
+    assert parcel["delivered"] is True
     assert parcel["pickup"] is True
 
 
