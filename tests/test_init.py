@@ -235,7 +235,7 @@ async def test_account_entry_sets_up_from_the_inbox_without_services(hass):
     # One in-flight parcel plus the thin element; the delivered one is separate.
     assert hass.states.get("sensor.hermes_someuser_incoming_parcels").state == "2"
     assert hass.states.get("sensor.hermes_someuser_delivered_parcels").state == "1"
-    # An account entry has no tracked list, so it registers no services.
+    # An account entry has no tracked list: it registers only update_contents.
     assert not hass.services.has_service(DOMAIN, "track_parcel")
 
     assert await hass.config_entries.async_unload(entry.entry_id)

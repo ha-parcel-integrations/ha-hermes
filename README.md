@@ -64,6 +64,7 @@ For tracking codes: Most codes are 14 digits; some carry a single leading letter
 - Summary sensors: incoming parcels, next delivery, recently delivered parcels
 - Read-only **Deliveries** calendar with the expected delivery windows
 - `hermes.track_parcel` / `hermes.untrack_parcel` services, so a dashboard button can add a parcel
+- A `contents` field on every parcel that you set yourself with `hermes.update_contents`, shown as the calendar event title
 - Events + device triggers for no-code automations (parcel registered, status changed, delivered, delivery time changed)
 - Opt-in per-parcel status history
 - Manual refresh button and a diagnostic last-update sensor
@@ -98,7 +99,9 @@ Or set it up by hand: add the integration via **Settings → Devices & Services 
 
 **Tracking codes** — there is nothing to fill in: the hub is created immediately. Then add parcels via the integration's **Configure** dialog, the [`hermes.track_parcel`](#services) service, or a [dashboard button](examples/dashboards/add_parcel_card.yaml). The tracking code is on your shipping confirmation email or the missed-delivery card. Only one tracking hub can exist.
 
-**Hermes account** — enter your account username and password. Only the login tokens are stored, never the password; if Hermes stops accepting them you are asked for the password again. You can add more than one account, and an account can sit next to the tracking hub. An account has no tracked-parcel list — its parcels come from your account — so its **Configure** dialog offers settings only, and the `track_parcel` / `untrack_parcel` services only ever act on the tracking hub.
+**Hermes account** — enter your account username and password. Only the login tokens are stored, never the password; if Hermes stops accepting them you are asked for the password again. You can add more than one account, and an account can sit next to the tracking hub. An account has no tracked-parcel list — its parcels come from your account — so its **Configure** dialog offers settings only, and the `track_parcel` / `untrack_parcel` services only ever act on the tracking hub (`update_contents` works for accounts too).
+
+Hermes does not tell us what is in a parcel yet, so `contents` is only ever the text you set yourself; it works for tracking-hub and account parcels alike.
 
 Parcels from a tracking code carry the sender when Hermes names one. The integration also reads the delivery window Hermes forecasts — a time span on a delivery day, or the moment a parcel becomes collectable at a PaketShop — but no parcel has been seen with one filled in yet, so expect it to stay empty until someone reports otherwise. The receiver, the PaketShop's own name and address, the weight and the dimensions are not on this route, so those fields stay empty.
 
@@ -198,8 +201,9 @@ Every payload is the full normalised parcel plus the hub's `device_id`. Events a
 
 | Service | Fields | Description |
 |---|---|---|
-| `hermes.track_parcel` | `tracking_code` | Start tracking a parcel |
+| `hermes.track_parcel` | `tracking_code`, `contents` (optional) | Start tracking a parcel, and optionally set what is in it |
 | `hermes.untrack_parcel` | `tracking_code` | Stop tracking a parcel |
+| `hermes.update_contents` | `tracking_code`, `contents` (empty clears it), `config_entry_id` (optional) | Set what is in a parcel, in your own words. It goes to every hub or account that lists the code, or to the one named by `config_entry_id` |
 
 ## Examples
 

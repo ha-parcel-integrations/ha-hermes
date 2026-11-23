@@ -33,7 +33,15 @@ PLATFORMS = [Platform.BUTTON, Platform.CALENDAR, Platform.SENSOR]
 # subset of this — it exists so a typo in CAPABILITIES fails a test instead of
 # silently dropping this carrier off a table on the docs site.
 KNOWN_CAPABILITIES = frozenset(
-    {"weight", "dimensions", "delivery_window", "pickup_point", "url", "history"}
+    {
+        "weight",
+        "dimensions",
+        "delivery_window",
+        "pickup_point",
+        "url",
+        "history",
+        "contents",
+    }
 )
 
 # Which optional contract fields each source's API actually populates — feeds
@@ -61,9 +69,13 @@ CAPABILITIES_BY_VARIANT = {
 # Neither source has shown a parcel routed to a pickup point that was still on
 # its way (tracking) or a PaketShop parcel before arrival (account), so the
 # `en_route_to_pickup_point` sensor reads 0 until one does.
+#
+# The account route's shipment has a `description` ("the product name of what
+# was ordered") that no captured parcel carried, so `contents` is pending there
+# and always None from the carrier until one does; the user can still set it.
 PENDING_CAPABILITIES_BY_VARIANT = {
     "Tracking": frozenset({"delivery_window"}),
-    "Account": frozenset({"delivery_window"}),
+    "Account": frozenset({"delivery_window", "contents"}),
 }
 CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 
@@ -140,6 +152,9 @@ ACCOUNT_API_KEY = "acefe97f-89fc-4f4e-9543-fc6b90f68928"
 # slot in without an options migration.
 CONF_PARCELS = "parcels"
 CONF_TRACKING_CODE = "tracking_code"
+# The user-set parcel contents, and the optional entry an update is limited to.
+CONF_CONTENTS = "contents"
+CONF_CONFIG_ENTRY_ID = "config_entry_id"
 
 # Delivered-parcels retention: keep delivered parcels visible for the last N
 # days, or keep only the N most recent — identical across the suite.

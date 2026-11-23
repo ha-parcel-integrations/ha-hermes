@@ -162,6 +162,7 @@ def normalize_account_parcel(raw: dict, *, include_history: bool = False) -> dic
         "barcode": barcode,
         "sender": _text(_dict(raw.get("atg")).get("companyName")),
         "receiver": first_name if isinstance(first_name, str) and first_name else None,
+        "contents": None,
         "status": status,
         "raw_status": _dict(status_block.get("text")).get("longText") or code,
         "delivered": delivered,

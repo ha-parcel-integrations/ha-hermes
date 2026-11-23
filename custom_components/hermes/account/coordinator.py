@@ -18,6 +18,7 @@ from ..const import (
     MID_INTERVAL_MINUTES,
     ParcelStatus,
 )
+from ..contents import ContentsStore, normalize_code
 from ..events import (
     fire_incoming_change_events,
     snapshot_delivery_times,
@@ -58,6 +59,10 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
             update_interval=timedelta(minutes=MID_INTERVAL_MINUTES),
         )
         self._client = client
+        self.contents_store = ContentsStore(hass, entry.entry_id)
+        # Every barcode the inbox lists, delivered ones past the retention
+        # filter included: update_contents asks which entry a code belongs to.
+        self.known_codes: frozenset[str] = frozenset()
         self.delivered: list[dict] = []
         # None on the first update deliberately suppresses historical events.
         self._known_state: dict[str, ParcelStatus] | None = None
@@ -110,6 +115,13 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
             normalize_account_parcel(raw, include_history=include_history)
             for raw in shipments
         ]
+        for parcel in parcels:
+            user_value = self.contents_store.get(parcel["barcode"] or "")
+            if user_value is not None:
+                parcel["contents"] = user_value
+        self.known_codes = frozenset(
+            normalize_code(parcel["barcode"]) for parcel in parcels if parcel["barcode"]
+        )
         active = sort_parcels_by_ts(
             [parcel for parcel in parcels if not parcel["delivered"]], "planned_from"
         )

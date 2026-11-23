@@ -50,7 +50,8 @@ different niche service — do not "fix" the integration to use it.
 
 - **`tracking/`** — the keyless code-based source. Endpoint/auth/payload/status
   are confirmed by three independent clients and a real 14-digit parcel.
-  Account-less (`track_parcel` / `untrack_parcel` services, tracking hubs only).
+  Account-less (`track_parcel` / `untrack_parcel` services, tracking hubs only;
+  `update_contents` serves every entry).
   The sender is populated when Hermes provides it; `receiver`, `pickup_point`,
   `weight`, `dimensions` stay `None`. `planned_from`/`planned_to` come from the
   payload's `forecast` block — `deliveryTimeFromUTC`/`deliveryTimeToUTC` is the
@@ -115,6 +116,18 @@ different niche service — do not "fix" the integration to use it.
   sends parcels would currently get the full incoming event set for them. Do not
   invent a discriminator from `shipmentType`'s `IN_` prefix without a real
   outgoing parcel; see `carrier-research/hermes/api/account.md`.
+- **`contents`** sits right after `receiver` in both normalisers and is always
+  `None` from the carrier: the account shipment's `description` is awaiting data
+  (ha-hermes#22), so `contents` is in `PENDING_CAPABILITIES_BY_VARIANT["Account"]`
+  and nowhere in `CAPABILITIES_BY_VARIANT`. Only the user fills it, through
+  `update_contents` (any loaded entry, hub or account; every entry whose
+  `coordinator.known_codes` holds the code, else `update_contents_entry_required`,
+  optional `config_entry_id`) or the optional field on `track_parcel` (hub only).
+  Each coordinator overlays the stored value after normalising, before sorting
+  and events, keyed on the requested code (tracking) or the barcode (account).
+  The `ContentsStore` file is removed in `async_remove_entry`; `contents.py` is
+  identical in every carrier. The account route's `description` mapping goes in
+  `normalize_account_parcel` once a real shipment shows it.
 - Root `api.py` / `coordinator.py` / `parcels.py` are re-export shims for old
   import paths — keep them. Assigning module state through `parcels.py` does not
   reach the real module (it copies names); use `tracking.parcels`.

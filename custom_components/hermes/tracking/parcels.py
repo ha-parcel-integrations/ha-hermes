@@ -455,6 +455,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         "barcode": tracking_code,
         "sender": sender if isinstance(sender, str) and sender else None,
         "receiver": None,
+        "contents": None,
         "status": status,
         "raw_status": latest.get("historyText") or status_code,
         "delivered": delivered,
