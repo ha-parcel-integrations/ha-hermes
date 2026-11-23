@@ -203,7 +203,7 @@ Every payload is the full normalised parcel plus the hub's `device_id`. Events a
 |---|---|---|
 | `hermes.track_parcel` | `tracking_code`, `contents` (optional) | Start tracking a parcel, and optionally set what is in it |
 | `hermes.untrack_parcel` | `tracking_code` | Stop tracking a parcel |
-| `hermes.update_contents` | `tracking_code`, `contents` (empty clears it), `config_entry_id` (optional) | Set what is in a parcel, in your own words. It goes to every hub or account that lists the code, or to the one named by `config_entry_id` |
+| `hermes.update_contents` | `tracking_code`, `contents` (empty clears it), `config_entry_id` (optional) | Set what is in a parcel, in your own words. It goes to every hub or account that lists the code, or to the one named by `config_entry_id`; it titles the calendar event and shows on the next-delivery sensor |
 
 ## Examples
 
