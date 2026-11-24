@@ -53,7 +53,7 @@ KNOWN_CAPABILITIES = frozenset(
 # went to.
 CAPABILITIES_BY_VARIANT = {
     "Tracking": frozenset({"url", "history"}),
-    "Account": frozenset({"pickup_point", "url", "history"}),
+    "Account": frozenset({"pickup_point", "url", "history", "contents"}),
 }
 
 # Fields not confirmed yet — the docs site shows them as "awaiting data".
@@ -69,13 +69,9 @@ CAPABILITIES_BY_VARIANT = {
 # Neither source has shown a parcel routed to a pickup point that was still on
 # its way (tracking) or a PaketShop parcel before arrival (account), so the
 # `en_route_to_pickup_point` sensor reads 0 until one does.
-#
-# The account route's shipment has a `description` ("the product name of what
-# was ordered") that no captured parcel carried, so `contents` is pending there
-# and always None from the carrier until one does; the user can still set it.
 PENDING_CAPABILITIES_BY_VARIANT = {
     "Tracking": frozenset({"delivery_window"}),
-    "Account": frozenset({"delivery_window", "contents"}),
+    "Account": frozenset({"delivery_window"}),
 }
 CAPABILITIES = CAPABILITIES_BY_VARIANT["Tracking"]
 

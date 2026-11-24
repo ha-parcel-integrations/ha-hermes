@@ -64,7 +64,7 @@ For tracking codes: Most codes are 14 digits; some carry a single leading letter
 - Summary sensors: incoming parcels, next delivery, recently delivered parcels
 - Read-only **Deliveries** calendar with the expected delivery windows
 - `hermes.track_parcel` / `hermes.untrack_parcel` services, so a dashboard button can add a parcel
-- A `contents` field on every parcel that you set yourself with `hermes.update_contents`, shown as the calendar event title
+- A `contents` field on every parcel, shown as the calendar event title: what an account parcel's sender wrote on the label, or your own text set with `hermes.update_contents`
 - Events + device triggers for no-code automations (parcel registered, status changed, delivered, delivery time changed)
 - Opt-in per-parcel status history
 - Manual refresh button and a diagnostic last-update sensor
@@ -101,7 +101,7 @@ Or set it up by hand: add the integration via **Settings → Devices & Services 
 
 **Hermes account** — enter your account username and password. Only the login tokens are stored, never the password; if Hermes stops accepting them you are asked for the password again. You can add more than one account, and an account can sit next to the tracking hub. An account has no tracked-parcel list — its parcels come from your account — so its **Configure** dialog offers settings only, and the `track_parcel` / `untrack_parcel` services only ever act on the tracking hub (`update_contents` works for accounts too).
 
-Hermes does not tell us what is in a parcel yet, so `contents` is only ever the text you set yourself; it works for tracking-hub and account parcels alike.
+On an account, `contents` is the description the sender put on the label, when the sender filled one in. A tracking code never carries it. Text you set with `hermes.update_contents` always wins, and it works for tracking-hub and account parcels alike.
 
 Parcels from a tracking code carry the sender when Hermes names one. The integration also reads the delivery window Hermes forecasts — a time span on a delivery day, or the moment a parcel becomes collectable at a PaketShop — but no parcel has been seen with one filled in yet, so expect it to stay empty until someone reports otherwise. The receiver, the PaketShop's own name and address, the weight and the dimensions are not on this route, so those fields stay empty.
 

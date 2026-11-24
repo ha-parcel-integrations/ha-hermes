@@ -194,6 +194,20 @@ def test_sender_is_none_when_hermes_names_no_company():
     assert normalize_account_parcel(shipment)["sender"] is None
 
 
+def test_contents_is_the_shipment_description():
+    shipment = delivered_shipment()
+    shipment["description"] = "  Garden  hose × 2 "
+    assert normalize_account_parcel(shipment)["contents"] == "Garden hose × 2"
+
+
+def test_contents_is_none_without_a_description():
+    shipment = delivered_shipment()
+    shipment.pop("description", None)
+    assert normalize_account_parcel(shipment)["contents"] is None
+    shipment["description"] = " "
+    assert normalize_account_parcel(shipment)["contents"] is None
+
+
 def test_pickup_point_is_the_shop_name_without_its_address():
     shipment = delivered_shipment()
     shipment["address"] = {

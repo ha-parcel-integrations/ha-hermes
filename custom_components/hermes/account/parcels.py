@@ -12,6 +12,7 @@ import logging
 from typing import Any
 
 from ..const import HISTORY_MAX_EVENTS, ParcelStatus
+from ..contents import clean_contents
 from ..status import ACCOUNT_STATUS_MAP, NEW_ISSUE_URL
 from ..tracking.parcels import is_pickup, parse_iso, to_iso_timestamp, tracking_url
 
@@ -162,7 +163,7 @@ def normalize_account_parcel(raw: dict, *, include_history: bool = False) -> dic
         "barcode": barcode,
         "sender": _text(_dict(raw.get("atg")).get("companyName")),
         "receiver": first_name if isinstance(first_name, str) and first_name else None,
-        "contents": None,
+        "contents": clean_contents(raw.get("description")),
         "status": status,
         "raw_status": _dict(status_block.get("text")).get("longText") or code,
         "delivered": delivered,
