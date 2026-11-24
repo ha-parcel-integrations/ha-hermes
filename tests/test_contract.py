@@ -152,11 +152,25 @@ def _account_return(code, delivered_flag):
 def test_a_return_back_at_the_sender_is_finished_but_stays_returning():
     for parcel in (
         _tracked_return("RETURN_DELIVERED_TO_SENDER", True),
+        _tracked_return("RETOURE_DELIVERED", True),
         _account_return("RETOURE_AUSGELIEFERT_BEIM_ATG", True),
     ):
         assert parcel["status"] is ParcelStatus.RETURNING
         assert parcel["delivered"] is True
         assert parcel["planned_from"] is None
+
+
+def test_a_delivered_return_takes_its_time_from_the_delivered_timestamp():
+    sample = active_sample()
+    sample["parcelAttributes"] = {
+        "delivered": True,
+        "deliveredTimestamp": "2026-11-20T10:15:00Z",
+    }
+    sample["parcelProgress"][0]["parcelStatus"] = "RETOURE_DELIVERED"
+    parcel = normalize_parcel(sample)
+    assert parcel["status"] is ParcelStatus.RETURNING
+    assert parcel["delivered"] is True
+    assert parcel["delivered_at"] is not None
 
 
 def test_the_delivered_flag_does_not_turn_a_return_into_a_delivery():

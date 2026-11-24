@@ -41,7 +41,7 @@ _LOGGER = logging.getLogger(__name__)
 # account source's, which is a different (German) vocabulary under the same
 # field name — the two must never share a map.
 _STATUS_MAP = TRACKING_STATUS_MAP
-_BACK_AT_SENDER = frozenset({"RETURN_DELIVERED_TO_SENDER"})
+_BACK_AT_SENDER = frozenset({"RETURN_DELIVERED_TO_SENDER", "RETOURE_DELIVERED"})
 _BERLIN = ZoneInfo("Europe/Berlin")
 
 # Status codes we have already warned about, so each unmapped one is logged

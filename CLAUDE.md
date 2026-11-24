@@ -155,7 +155,7 @@ not in this repo.
   yet still ends the parcel (ha-hermes#1), and it wins over `at_pickup_point`
   (a collected parcel is delivered); no captured parcel showed the flag firing
   on drop-off at the shop, so it is not suppressed there. A return stays `returning` whatever
-  the flag says; only `RETURN_DELIVERED_TO_SENDER` (tracking) and
+  the flag says; only `RETURN_DELIVERED_TO_SENDER`/`RETOURE_DELIVERED` (tracking) and
   `RETOURE_AUSGELIEFERT_BEIM_ATG` (account) make it finished (`delivered: true`),
   which fires no `_delivered` event.
 - `pickup` is `addressType == PARCELSHOP` (account) or any status/history entry
