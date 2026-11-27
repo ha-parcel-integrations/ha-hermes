@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -64,6 +64,11 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
         # filter included: update_contents asks which entry a code belongs to.
         self.known_codes: frozenset[str] = frozenset()
         self.delivered: list[dict] = []
+        # id(published parcel) -> the barcode its contents are stored under.
+        self._parcel_codes: dict[int, str] = {}
+        # id(published parcel) -> the text the carrier sent, which a cleared
+        # user value falls back to.
+        self._carrier_contents: dict[int, str | None] = {}
         # None on the first update deliberately suppresses historical events.
         self._known_state: dict[str, ParcelStatus] | None = None
         self._known_delivery_times: dict[str, tuple[str | None, str | None]] | None = (
@@ -94,6 +99,22 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
             self._cached_device_id = device.id
         return self._cached_device_id
 
+    def _apply_contents(self, parcel: dict, code: object) -> dict:
+        """Put the user's own contents text over the carrier's, when there is one."""
+        user_value = self.contents_store.get(code)
+        if user_value is not None:
+            parcel["contents"] = user_value
+        return parcel
+
+    @callback
+    def async_reapply_contents(self) -> None:
+        """Re-read the contents store into the published parcels, without a poll."""
+        for parcel in [*(self.data or []), *self.delivered]:
+            code = self._parcel_codes.get(id(parcel), parcel.get("barcode") or "")
+            parcel["contents"] = self._carrier_contents.get(id(parcel))
+            self._apply_contents(parcel, code)
+        self.async_update_listeners()
+
     async def _async_update_data(self) -> list[dict]:
         try:
             shipments = await self._client.async_get_shipments()
@@ -115,10 +136,10 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
             normalize_account_parcel(raw, include_history=include_history)
             for raw in shipments
         ]
+        self._carrier_contents = {id(p): p.get("contents") for p in parcels}
         for parcel in parcels:
-            user_value = self.contents_store.get(parcel["barcode"] or "")
-            if user_value is not None:
-                parcel["contents"] = user_value
+            self._apply_contents(parcel, parcel["barcode"] or "")
+        self._parcel_codes = {id(p): p["barcode"] or "" for p in parcels}
         self.known_codes = frozenset(
             normalize_code(parcel["barcode"]) for parcel in parcels if parcel["barcode"]
         )

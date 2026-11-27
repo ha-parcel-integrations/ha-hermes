@@ -14,7 +14,7 @@ import logging
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -155,6 +155,10 @@ class HermesCoordinator(DataUpdateCoordinator[list[dict]]):
         # included: update_contents asks which entry a code belongs to.
         self.known_codes: frozenset[str] = frozenset()
         self.delivered: list[dict] = []
+        # id(published parcel) -> the code it was requested with: the contents
+        # store is keyed on the latter, and a response may carry another number
+        # or none at all.
+        self._parcel_codes: dict[int, str] = {}
         # tracking_code -> last successful raw payload, so a transient fetch
         # failure or a not-found blip keeps the parcel visible instead of
         # dropping its sensor. Lives for the integration's lifetime (resets on
@@ -183,6 +187,22 @@ class HermesCoordinator(DataUpdateCoordinator[list[dict]]):
         # diagnostics; ``None`` before the first refresh and whenever polling
         # is fully suspended (nothing tracked, or everything delivered).
         self._current_tier_minutes: int | None = None
+
+    def _apply_contents(self, parcel: dict, code: object) -> dict:
+        """Put the user's own contents text over the carrier's, when there is one."""
+        user_value = self.contents_store.get(code)
+        if user_value is not None:
+            parcel["contents"] = user_value
+        return parcel
+
+    @callback
+    def async_reapply_contents(self) -> None:
+        """Re-read the contents store into the published parcels, without a poll."""
+        for parcel in [*(self.data or []), *self.delivered]:
+            code = self._parcel_codes.get(id(parcel), parcel.get("barcode") or "")
+            parcel["contents"] = None
+            self._apply_contents(parcel, code)
+        self.async_update_listeners()
 
     @property
     def current_tier_minutes(self) -> int | None:
@@ -304,9 +324,8 @@ class HermesCoordinator(DataUpdateCoordinator[list[dict]]):
             for code, raw in raws_by_code.items()
         ]
         for code, parcel in entries:
-            user_value = self.contents_store.get(code)
-            if user_value is not None:
-                parcel["contents"] = user_value
+            self._apply_contents(parcel, code)
+        self._parcel_codes = {id(parcel): code for code, parcel in entries}
         self.known_codes = frozenset(
             normalize_code(value)
             for code, parcel in entries

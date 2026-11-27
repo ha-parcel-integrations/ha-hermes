@@ -105,6 +105,33 @@ async def _call(hass, service: str, data: dict) -> None:
         await hass.async_block_till_done()
 
 
+@contextmanager
+def _no_poll():
+    """Patch every way a coordinator could ask the carrier.
+
+    Yields a callable that asserts none of them was used.
+    """
+    with (
+        patch.object(HermesCoordinator, "async_request_refresh", AsyncMock()) as hub,
+        patch.object(
+            HermesAccountCoordinator, "async_request_refresh", AsyncMock()
+        ) as inbox_refresh,
+        patch(f"{CLIENT}.async_get_parcel", new=AsyncMock()) as fetch,
+        patch(f"{ACCOUNT_CLIENT}.async_get_shipments", new=AsyncMock()) as inbox,
+    ):
+
+        def assert_no_poll() -> None:
+            for mock in (hub, inbox_refresh, fetch, inbox):
+                mock.assert_not_called()
+
+        yield assert_no_poll
+
+
+async def _call_no_poll(hass, service: str, data: dict) -> None:
+    await hass.services.async_call(DOMAIN, service, data, blocking=True)
+    await hass.async_block_till_done()
+
+
 def _contents(entry: MockConfigEntry, code: str) -> str | None:
     parcels = {p["barcode"]: p for p in entry.runtime_data.coordinator.data}
     return parcels[code]["contents"]
@@ -177,18 +204,24 @@ async def test_update_contents_works_for_a_code_that_is_not_tracked(hass):
     assert entry.options[CONF_PARCELS] == [{CONF_TRACKING_CODE: ACTIVE_CODE}]
 
 
-async def test_update_contents_refreshes_only_when_something_changed(hass):
-    await _setup(hass, [ACTIVE_CODE])
+async def test_update_contents_reapplies_only_when_something_changed(hass):
+    entry = await _setup(hass, [ACTIVE_CODE])
+    coordinator = entry.runtime_data.coordinator
     data = {CONF_TRACKING_CODE: ACTIVE_CODE, "contents": "Running shoes"}
-    with patch.object(
-        HermesCoordinator, "async_request_refresh", AsyncMock()
-    ) as refresh:
-        await _call(hass, "update_contents", data)
-        assert refresh.await_count == 1
-        await _call(hass, "update_contents", data)
-        assert refresh.await_count == 1
-        await _call(hass, "update_contents", {CONF_TRACKING_CODE: UNTRACKED})
-        assert refresh.await_count == 1
+    with (
+        _no_poll() as assert_no_poll,
+        patch.object(coordinator, "async_update_listeners") as listeners,
+    ):
+        await _call_no_poll(hass, "update_contents", data)
+        assert listeners.call_count == 1
+        await _call_no_poll(hass, "update_contents", data)
+        assert listeners.call_count == 1
+        # Clearing a code no entry lists touches nothing.
+        await _call_no_poll(hass, "update_contents", {CONF_TRACKING_CODE: UNTRACKED})
+        assert listeners.call_count == 1
+        await _call_no_poll(hass, "update_contents", {CONF_TRACKING_CODE: ACTIVE_CODE})
+        assert listeners.call_count == 2
+    assert_no_poll()
 
 
 async def test_an_unchanged_value_writes_nothing(hass):
@@ -264,15 +297,22 @@ async def test_track_parcel_replaces_and_clears_contents_of_a_tracked_code(hass)
     assert entry.options[CONF_PARCELS] == [{CONF_TRACKING_CODE: ACTIVE_CODE}]
 
 
-async def test_track_parcel_unchanged_contents_requests_no_refresh(hass):
-    await _setup(hass, [ACTIVE_CODE])
+async def test_track_parcel_on_a_tracked_code_does_not_poll(hass):
+    entry = await _setup(hass, [ACTIVE_CODE])
+    coordinator = entry.runtime_data.coordinator
     data = {CONF_TRACKING_CODE: ACTIVE_CODE, "contents": "Running shoes"}
-    with patch.object(
-        HermesCoordinator, "async_request_refresh", AsyncMock()
-    ) as refresh:
-        await _call(hass, "track_parcel", data)
-        await _call(hass, "track_parcel", data)
-    assert refresh.await_count == 1
+    with (
+        _no_poll() as assert_no_poll,
+        patch.object(coordinator, "async_update_listeners") as listeners,
+    ):
+        await _call_no_poll(hass, "track_parcel", data)
+        assert _contents(entry, ACTIVE_CODE) == "Running shoes"
+        await _call_no_poll(hass, "track_parcel", data)
+        assert listeners.call_count == 1
+        await _call_no_poll(hass, "track_parcel", {**data, "contents": ""})
+        assert listeners.call_count == 2
+    assert _contents(entry, ACTIVE_CODE) is None
+    assert_no_poll()
 
 
 async def test_track_parcel_with_contents_needs_a_loaded_hub(hass):
@@ -632,3 +672,218 @@ async def test_a_hub_after_an_account_still_registers_the_hub_services(hass):
 
     assert hass.services.has_service(DOMAIN, "track_parcel")
     assert hass.services.has_service(DOMAIN, "untrack_parcel")
+
+
+# ---------------------------------------------------------------------------
+# a contents change never polls the carrier
+# ---------------------------------------------------------------------------
+
+
+async def test_update_contents_reaches_the_account_without_a_poll(hass):
+    account = await _setup_account(hass)
+    coordinator = account.runtime_data.coordinator
+    with (
+        _no_poll() as assert_no_poll,
+        patch.object(coordinator, "async_update_listeners") as listeners,
+    ):
+        await _call_no_poll(
+            hass,
+            "update_contents",
+            {CONF_TRACKING_CODE: ACCOUNT_CODE, "contents": "Running shoes"},
+        )
+        assert listeners.call_count == 1
+        await _call_no_poll(
+            hass,
+            "update_contents",
+            {CONF_TRACKING_CODE: ACCOUNT_CODE, "contents": "Running shoes"},
+        )
+        assert listeners.call_count == 1
+    assert_no_poll()
+    assert _contents(account, ACCOUNT_CODE) == "Running shoes"
+
+
+async def test_reapply_reaches_delivered_parcels(hass):
+    account = await _setup_account(hass)
+    coordinator = account.runtime_data.coordinator
+    assert coordinator.delivered
+    with _no_poll() as assert_no_poll:
+        await _call_no_poll(
+            hass,
+            "update_contents",
+            {CONF_TRACKING_CODE: ACCOUNT_DELIVERED, "contents": "Winter socks"},
+        )
+    assert_no_poll()
+    assert coordinator.delivered[0]["contents"] == "Winter socks"
+
+    with _no_poll():
+        await _call_no_poll(
+            hass, "update_contents", {CONF_TRACKING_CODE: ACCOUNT_DELIVERED}
+        )
+    assert coordinator.delivered[0]["contents"] is None
+
+
+async def test_reapply_reaches_a_delivered_tracked_parcel(hass):
+    entry = await _setup(hass, [ACTIVE_CODE])
+    coordinator = entry.runtime_data.coordinator
+    hass.config_entries.async_update_entry(
+        entry,
+        options={
+            **entry.options,
+            CONF_DELIVERED_FILTER_TYPE: "parcels",
+            CONF_DELIVERED_FILTER_AMOUNT: 10,
+        },
+    )
+    with patch(
+        f"{CLIENT}.async_get_parcel",
+        new=AsyncMock(return_value=delivered_sample(ACTIVE_CODE)),
+    ):
+        await coordinator._async_update_data()
+    assert coordinator.delivered
+
+    with _no_poll() as assert_no_poll:
+        await _call_no_poll(
+            hass,
+            "update_contents",
+            {CONF_TRACKING_CODE: ACTIVE_CODE, "contents": "Running shoes"},
+        )
+    assert_no_poll()
+    assert coordinator.delivered[0]["contents"] == "Running shoes"
+
+
+async def test_a_barcodeless_parcel_keeps_its_contents_after_reapply_and_a_poll(hass):
+    entry = await _setup(hass, [ACTIVE_CODE])
+    coordinator = entry.runtime_data.coordinator
+    real = module.normalize_parcel
+
+    def without_barcode(raw, **kwargs):
+        parcel = real(raw, **kwargs)
+        parcel["barcode"] = None
+        return parcel
+
+    with (
+        patch.object(module, "normalize_parcel", side_effect=without_barcode),
+        patch(
+            f"{CLIENT}.async_get_parcel",
+            new=AsyncMock(return_value=active_sample(ACTIVE_CODE)),
+        ),
+    ):
+        await coordinator._async_update_data()
+        coordinator.data = await coordinator._async_update_data()
+        coordinator.contents_store.async_set(ACTIVE_CODE, "Running shoes")
+        coordinator.async_reapply_contents()
+        assert coordinator.data[0]["contents"] == "Running shoes"
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data[0]["contents"] == "Running shoes"
+
+
+async def test_a_different_response_barcode_keeps_the_text_after_reapply(hass):
+    entry = await _setup(hass, [ACTIVE_CODE])
+    coordinator = entry.runtime_data.coordinator
+    coordinator.contents_store.async_set(ACTIVE_CODE, "Running shoes")
+
+    with patch(
+        f"{CLIENT}.async_get_parcel",
+        new=AsyncMock(return_value=active_sample(DELIVERED_CODE)),
+    ):
+        coordinator.data = await coordinator._async_update_data()
+    assert coordinator.data[0]["barcode"] == DELIVERED_CODE
+
+    coordinator.contents_store.async_set(ACTIVE_CODE, "Winter socks")
+    coordinator.async_reapply_contents()
+
+    assert coordinator.data[0]["contents"] == "Winter socks"
+
+
+async def test_two_entries_listing_the_code_are_both_reapplied_without_a_poll(hass):
+    home = await _setup(hass, [ACTIVE_CODE])
+    work = await _setup(hass, [ACTIVE_CODE], unique_id="second")
+    with (
+        _no_poll() as assert_no_poll,
+        (
+            patch.object(home.runtime_data.coordinator, "async_update_listeners")
+        ) as home_listeners,
+        patch.object(
+            work.runtime_data.coordinator, "async_update_listeners"
+        ) as work_listeners,
+    ):
+        await _call_no_poll(
+            hass,
+            "update_contents",
+            {CONF_TRACKING_CODE: ACTIVE_CODE, "contents": "Running shoes"},
+        )
+    assert_no_poll()
+    assert home_listeners.call_count == 1
+    assert work_listeners.call_count == 1
+    assert _contents(home, ACTIVE_CODE) == "Running shoes"
+    assert _contents(work, ACTIVE_CODE) == "Running shoes"
+
+
+async def test_a_new_code_with_contents_still_refreshes(hass):
+    entry = await _setup(hass)
+    await _call(
+        hass,
+        "track_parcel",
+        {CONF_TRACKING_CODE: ACTIVE_CODE, "contents": "Running shoes"},
+    )
+    assert _contents(entry, ACTIVE_CODE) == "Running shoes"
+
+
+async def _setup_account_with_description(hass) -> MockConfigEntry:
+    described = in_flight_shipment()
+    described["description"] = "Carrier text"
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="account:someuser",
+        data={CONF_SOURCE: SOURCE_ACCOUNT, CONF_USERNAME: "someuser"},
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        f"{ACCOUNT_CLIENT}.async_get_shipments",
+        new=AsyncMock(return_value=[described, delivered_shipment()]),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    return entry
+
+
+async def test_account_reapply_keeps_carrier_text_for_other_codes(hass):
+    account = await _setup_account_with_description(hass)
+    assert _contents(account, ACCOUNT_CODE) == "Carrier text"
+    with _no_poll() as assert_no_poll:
+        await _call_no_poll(
+            hass,
+            "update_contents",
+            {CONF_TRACKING_CODE: ACCOUNT_DELIVERED, "contents": "Winter socks"},
+        )
+    assert_no_poll()
+    assert _contents(account, ACCOUNT_CODE) == "Carrier text"
+
+
+async def test_account_user_value_beats_carrier_text_and_clearing_reverts(hass):
+    account = await _setup_account_with_description(hass)
+    coordinator = account.runtime_data.coordinator
+    set_value = {CONF_TRACKING_CODE: ACCOUNT_CODE, "contents": "Running shoes"}
+    with _no_poll():
+        await _call_no_poll(hass, "update_contents", set_value)
+    assert _contents(account, ACCOUNT_CODE) == "Running shoes"
+
+    # A poll keeps the user value; the carrier text stays behind it.
+    described = in_flight_shipment()
+    described["description"] = "Carrier text"
+    with patch(
+        f"{ACCOUNT_CLIENT}.async_get_shipments",
+        new=AsyncMock(return_value=[described, delivered_shipment()]),
+    ):
+        coordinator.data = await coordinator._async_update_data()
+    assert _contents(account, ACCOUNT_CODE) == "Running shoes"
+
+    with _no_poll():
+        await _call_no_poll(hass, "update_contents", {CONF_TRACKING_CODE: ACCOUNT_CODE})
+    assert _contents(account, ACCOUNT_CODE) == "Carrier text"
+
+    with patch(
+        f"{ACCOUNT_CLIENT}.async_get_shipments",
+        new=AsyncMock(return_value=[described, delivered_shipment()]),
+    ):
+        coordinator.data = await coordinator._async_update_data()
+    assert _contents(account, ACCOUNT_CODE) == "Carrier text"
