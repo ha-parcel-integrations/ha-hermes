@@ -129,7 +129,9 @@ class HermesAccountClient:
                         # surface as the same pre-auth HTML page. Log what it
                         # actually returned so a user's log can tell them apart.
                         _LOGGER.warning(
-                            "Hermes gateway refused %s with an HTML %s (%s): %s",
+                            "Hermes gateway refused %s with an HTML %s (%s) before"
+                            " checking the login; if the official Hermes app cannot"
+                            " sign in either, this is on Hermes' side: %s",
                             path,
                             response.status,
                             response.content_type,

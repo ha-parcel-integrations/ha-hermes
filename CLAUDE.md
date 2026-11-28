@@ -84,6 +84,9 @@ different niche service — do not "fix" the integration to use it.
   logs the status + content-type + a truncated body snippet (`_snippet`) so a
   user's debug log can tell them apart. The account coordinator raises
   `ConfigEntryAuthFailed` itself.
+  The user-facing `request_refused` text (config error and the coordinator's
+  translated `UpdateFailed`) names the official Hermes app as the test: if the
+  app can't sign in either, it is a Hermes outage (#19) and recovers unaided.
   `sender` is `atg.companyName` — **ATG is the Auftraggeber, the shipper**, not
   the delivering partner (four real parcels named Flaconi, QVC, Deutsche Telekom
   and "Privatversand"). `pickup_point` is the shop name (`address.lastName`, no street or town) **only when

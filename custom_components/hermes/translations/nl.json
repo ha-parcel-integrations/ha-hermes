@@ -32,7 +32,7 @@
     "error": {
       "invalid_auth": "De gebruikersnaam of het wachtwoord is niet geaccepteerd.",
       "cannot_connect": "Hermes is niet bereikbaar. Probeer het later opnieuw.",
-      "request_refused": "Hermes heeft dit verzoek geweigerd nog vóór je login werd gecontroleerd, dus opnieuw inloggen helpt niet. Zet debug-logging aan om de exacte respons vast te leggen en meld die als het probleem blijft."
+      "request_refused": "De servers van Hermes weigerden dit verzoek nog vóór je login werd gecontroleerd. Je gebruikersnaam en wachtwoord zijn dus niet het probleem, en opnieuw inloggen helpt niet. Kijk of je in de officiële Hermes-app kunt inloggen: lukt dat ook niet, dan ligt het bij Hermes en werkt het weer zodra zij het oplossen, zonder update. Werkt de app wel, meld het dan."
     }
   },
   "options": {
@@ -198,6 +198,9 @@
   "exceptions": {
     "update_contents_entry_required": {
       "message": "Geen enkel account kent deze code. Kies het account waarvoor je dit wilt opslaan."
+    },
+    "request_refused": {
+      "message": "De servers van Hermes weigerden het accountverzoek nog vóór je login werd gecontroleerd. Kijk of je in de officiële Hermes-app kunt inloggen: lukt dat ook niet, dan ligt het bij Hermes en herstelt dit zich vanzelf zodra zij het oplossen."
     }
   }
 }

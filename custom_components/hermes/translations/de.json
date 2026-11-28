@@ -32,7 +32,7 @@
     "error": {
       "invalid_auth": "Benutzername oder Passwort wurde nicht akzeptiert.",
       "cannot_connect": "Hermes ist nicht erreichbar. Versuche es später erneut.",
-      "request_refused": "Hermes hat diese Anfrage abgelehnt, bevor deine Anmeldung geprüft wurde — eine erneute Anmeldung hilft also nicht. Aktiviere das Debug-Log, um die genaue Antwort zu erfassen, und melde sie, falls das Problem bestehen bleibt."
+      "request_refused": "Die Server von Hermes haben diese Anfrage abgelehnt, bevor deine Anmeldung geprüft wurde. Benutzername und Passwort sind also nicht das Problem, und eine erneute Anmeldung hilft nicht. Prüfe, ob du dich in der offiziellen Hermes-App anmelden kannst: Klappt das dort auch nicht, liegt das Problem bei Hermes und es funktioniert wieder, sobald Hermes es behebt – ohne Update. Funktioniert die App, melde es bitte."
     }
   },
   "options": {
@@ -198,6 +198,9 @@
   "exceptions": {
     "update_contents_entry_required": {
       "message": "Kein Konto kennt diesen Code. Wähle das Konto, für das er gespeichert werden soll."
+    },
+    "request_refused": {
+      "message": "Die Server von Hermes haben die Kontoanfrage abgelehnt, bevor deine Anmeldung geprüft wurde. Prüfe, ob du dich in der offiziellen Hermes-App anmelden kannst: Klappt das dort auch nicht, liegt das Problem bei Hermes und es behebt sich von selbst, sobald Hermes es löst."
     }
   }
 }

@@ -32,7 +32,7 @@
     "error": {
       "invalid_auth": "The username or password was not accepted.",
       "cannot_connect": "Could not reach Hermes. Try again later.",
-      "request_refused": "Hermes refused this request before it checked your login, so signing in again will not help. Enable debug logging to capture the exact response, and report it if the problem persists."
+      "request_refused": "Hermes' servers refused this request before checking your login, so your username and password are not the problem and signing in again will not help. Check whether the official Hermes app can sign in: if it cannot either, the problem is at Hermes and this works again once they fix it, with no update needed. If the app works, please report it."
     }
   },
   "options": {
@@ -198,6 +198,9 @@
   "exceptions": {
     "update_contents_entry_required": {
       "message": "No account lists this code. Choose the account to store it for."
+    },
+    "request_refused": {
+      "message": "Hermes' servers refused the account request before checking your login. Check whether the official Hermes app can sign in: if it cannot either, the problem is at Hermes and this recovers by itself once they fix it."
     }
   }
 }

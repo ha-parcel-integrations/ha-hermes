@@ -124,7 +124,7 @@ class HermesAccountCoordinator(DataUpdateCoordinator[list[dict]]):
             ) from err
         except HermesAccountCompatibilityError as err:
             raise UpdateFailed(
-                "Hermes refused the account request before checking the login"
+                translation_domain=DOMAIN, translation_key="request_refused"
             ) from err
         except HermesAccountApiError as err:
             raise UpdateFailed("Unable to update Hermes account inbox") from err
