@@ -340,18 +340,32 @@ async def test_untrack_parcel_drops_the_contents(hass):
     assert entry.options[CONF_PARCELS] == []
 
 
-async def test_untrack_parcel_skips_a_hub_that_is_not_loaded(hass):
-    asleep = await _setup(hass, [ACTIVE_CODE])
-    entry = await _setup(hass, [], unique_id="second")
-    # _resolve_entry takes the first hub; unload it, leaving a stale store to skip.
-    assert await hass.config_entries.async_unload(asleep.entry_id)
-    assert entry.state is ConfigEntryState.LOADED
-
-    await hass.services.async_call(
-        DOMAIN, "untrack_parcel", {CONF_TRACKING_CODE: ACTIVE_CODE}, blocking=True
+async def test_untrack_parcel_forgets_the_contents_of_a_hub_that_is_not_loaded(
+    hass, hass_storage
+):
+    entry = await _setup(hass, [ACTIVE_CODE])
+    await _call(
+        hass,
+        "update_contents",
+        {CONF_TRACKING_CODE: ACTIVE_CODE, "contents": "Running shoes"},
     )
+    key = STORE_KEY % entry.entry_id
+    assert hass_storage[key]["data"] == {"by_code": {ACTIVE_CODE: "Running shoes"}}
+    entry.mock_state(hass, ConfigEntryState.SETUP_RETRY)
 
-    assert asleep.options[CONF_PARCELS] == []
+    await _call(hass, "untrack_parcel", {CONF_TRACKING_CODE: ACTIVE_CODE})
+
+    assert entry.options[CONF_PARCELS] == []
+    assert hass_storage[key]["data"] == {"by_code": {}}
+
+    entry.mock_state(hass, ConfigEntryState.LOADED)
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    with _polls():
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    await _call(hass, "track_parcel", {CONF_TRACKING_CODE: ACTIVE_CODE})
+
+    assert _contents(entry, ACTIVE_CODE) is None
 
 
 async def test_a_stored_value_survives_a_restart_of_the_entry(hass, hass_storage):
